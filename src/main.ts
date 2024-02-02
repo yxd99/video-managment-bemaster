@@ -1,9 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { config } from './constants';
+import { swagger } from './config';
 
 (async function () {
-  const port = process.env.PORT ?? 3000;
+  const port = config.PORT ?? 3000;
   const app = await NestFactory.create(AppModule, {
     cors: true,
   });
@@ -16,7 +18,8 @@ import { ValidationPipe } from '@nestjs/common';
     }),
   );
 
-  app.setGlobalPrefix('api');
+  swagger.setup(app);
+  app.setGlobalPrefix(config.PREFIX);
 
   await app.listen(port, async () => {
     console.log(`App in: ${await app.getUrl()}`);
