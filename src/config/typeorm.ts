@@ -13,6 +13,7 @@ export function config(): TypeOrmModuleOptions {
     type: 'mariadb',
     synchronize: environment !== 'prod',
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
+    autoLoadEntities: true,
     migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
   };
 }
