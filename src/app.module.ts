@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
+import { VideoLikesModule } from '@api/video-likes/video-likes.module';
+
 import { VideosModule } from './api/videos/videos.module';
 import { AuthModule } from './auth/auth.module';
 import { typeorm } from './config';
@@ -19,6 +21,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     VideosModule,
     CloudinaryModule,
+    VideoLikesModule,
   ],
   providers: [Logger],
 })
