@@ -1,4 +1,4 @@
-import { user } from '@/properties';
+import { user } from '@/constants';
 import { bcrypt } from '@/utils';
 import {
   Column,

@@ -9,7 +9,7 @@ import {
 import { AuthService } from '@/auth/auth.service';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { LoginDto } from '@/auth/dto/login.dto';
-import { Public } from '@/auth/decorators/set-metadata';
+import { Public } from '@/decorators';
 import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ResponseHttp } from '@/interface';
 

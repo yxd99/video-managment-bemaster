@@ -1,5 +1,5 @@
 import { Match } from '@/decorators';
-import { user } from '@/properties';
+import { user } from '@/constants';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 
