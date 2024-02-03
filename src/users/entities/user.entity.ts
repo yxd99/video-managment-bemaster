@@ -1,3 +1,5 @@
+import { user } from '@/properties';
+import { bcrypt } from '@/utils';
 import {
   Column,
   DeleteDateColumn,
@@ -12,14 +14,14 @@ export class User {
 
   @Column({
     type: 'varchar',
-    length: 10,
+    length: user.MAX_LENGTH_USERNAME,
     nullable: false,
   })
   username: string;
 
   @Column({
     type: 'varchar',
-    length: 50,
+    length: user.MAX_LENGTH_EMAIL,
     unique: true,
     nullable: false,
   })
@@ -36,4 +38,8 @@ export class User {
     select: false,
   })
   delete_date: Date;
+
+  checkPassword(password: string) {
+    return bcrypt.compare(password, this.password);
+  }
 }

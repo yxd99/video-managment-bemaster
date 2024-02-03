@@ -59,7 +59,7 @@ export class UsersService {
     if (user !== null) {
       return { message: 'User not exist' };
     }
-    await this.userRepository.softDelete(user);
+    await this.userRepository.softDelete(user.id);
     return {
       message: `user ${user.username} has been remove successful`,
     };

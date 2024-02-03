@@ -14,9 +14,6 @@ export class AuthService {
   ) {}
 
   async register(createUserDto: CreateUserDto): Promise<ResponseHttp> {
-    if (createUserDto.password !== createUserDto.validatePassword) {
-      return { error: 'passwords do not match' };
-    }
     const user = await this.usersService.findByEmail(createUserDto.email);
 
     if (user !== null) {
@@ -64,5 +61,10 @@ export class AuthService {
     return {
       token,
     };
+  }
+
+  async validateUser(email: string, password: string) {
+    const user = await this.usersService.findByEmail(email);
+    return user?.checkPassword(password) ? user : null;
   }
 }

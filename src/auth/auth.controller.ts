@@ -1,35 +1,55 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+} from '@nestjs/common';
 import { AuthService } from '@/auth/auth.service';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { LoginDto } from '@/auth/dto/login.dto';
 import { Public } from '@/auth/decorators/set-metadata';
+import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ResponseHttp } from '@/interface';
 
 @Public()
 @Controller('auth')
+@ApiTags('Auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() body: CreateUserDto): Promise<object> {
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'returns a jwt if the user succeeded in registering.',
+  })
+  @ApiBody({ type: CreateUserDto })
+  async register(@Body() body: CreateUserDto): Promise<ResponseHttp> {
     const response = await this.authService.register(body);
     if (response?.error) {
       throw new BadRequestException(response.error);
     }
-    const token = await this.login({
+    const { token } = await this.login({
       email: body.email,
       password: body.validatePassword,
     });
     return {
-      token: token,
+      token,
     };
   }
 
   @Post('login')
-  async login(@Body() body: LoginDto): Promise<object> {
-    const response = await this.authService.login(body);
-    if (response?.error) {
-      throw new BadRequestException(response.error);
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({
+    status: HttpStatus.OK
+  })
+  @ApiBody({ type: LoginDto })
+  async login(@Body() body: LoginDto): Promise<ResponseHttp> {
+    const { error, token } = await this.authService.login(body);
+    if (error) {
+      throw new BadRequestException(error);
     }
-    return response;
+    return { token };
   }
 }
