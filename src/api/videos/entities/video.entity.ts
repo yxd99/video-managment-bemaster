@@ -7,7 +7,11 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-import { MAX_LENGTH_VIDEO_TITLE, MIN_LENGTH_VIDEO_TITLE } from '../constants';
+import {
+  MAX_LENGTH_VIDEO_TITLE,
+  MIN_LENGTH_VIDEO_TITLE,
+  TYPE_PRIVACY,
+} from '../constants';
 
 @Entity('videos')
 export class Video {
@@ -31,6 +35,13 @@ export class Video {
     nullable: false,
   })
   url: string;
+
+  @Column({
+    type: 'enum',
+    enum: TYPE_PRIVACY,
+    default: TYPE_PRIVACY.PUBLIC,
+  })
+  privacy: string;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

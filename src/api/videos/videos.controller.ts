@@ -11,8 +11,11 @@ import {
   FileTypeValidator,
   UploadedFile,
   MaxFileSizeValidator,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+
+import { Public } from '@root/decorators';
 
 import { MAX_SIZE_VIDEO } from './constants';
 import { CreateVideoDto } from './dto/create-video.dto';
@@ -37,13 +40,16 @@ export class VideosController {
     video: Express.Multer.File,
     @Body() createVideoDto: CreateVideoDto,
   ) {
-    createVideoDto.video = video;
-    return this.videosService.create(createVideoDto);
+    const createVideo = { ...createVideoDto, video };
+    return this.videosService.create(createVideo);
   }
 
+  @Public()
   @Get()
-  findAll() {
-    return this.videosService.findAll();
+  findAll(@Req() req) {
+    console.log(req.user);
+
+    return this.videosService.findAll(req.isAuthenticated);
   }
 
   @Get(':id')

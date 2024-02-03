@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CloudinaryService } from '@shared/cloudinary/cloudinary.service';
 import { Repository } from 'typeorm';
 
+import { CloudinaryService } from '@shared/cloudinary/cloudinary.service';
+
+import { TYPE_PRIVACY } from './constants';
 import { CreateVideoDto } from './dto/create-video.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { Video } from './entities/video.entity';
@@ -26,8 +28,11 @@ export class VideosService {
     return `video ${videoCreate.title} has been create successful`;
   }
 
-  findAll() {
-    return `This action returns all videos`;
+  async findAll(isAuthenticated: boolean): Promise<Video[]> {
+    const videos = await this.getPublicVideos();
+    if (isAuthenticated) videos.push(...(await this.getPrivateVideos()));
+
+    return videos;
   }
 
   findOne(id: number) {
@@ -40,5 +45,13 @@ export class VideosService {
 
   remove(id: number) {
     return `This action removes a #${id} video`;
+  }
+
+  async getPublicVideos(): Promise<Video[]> {
+    return this.videoRepository.findBy({ privacy: TYPE_PRIVACY.PUBLIC });
+  }
+
+  async getPrivateVideos(): Promise<Video[]> {
+    return this.videoRepository.findBy({ privacy: TYPE_PRIVACY.PRIVATE });
   }
 }
