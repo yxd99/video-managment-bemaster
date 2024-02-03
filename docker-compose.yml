@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  db:
+    container_name: ${DB_NAME}
+    image: mariadb:jammy
+    environment:
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MYSQL_TCP_PORT: ${DB_PORT}
+      MYSQL_UNIX_PORT: ${DB_PORT}
+    volumes:
+      - ./docker/mariadb:/var/lib/mysql
+    restart: always
+  app:
+    depends_on:
+      - db
+    build: 
+      context: .
+      dockerfile: dockerfile
+    container_name: video-management-bemaster
+    environment:
+      PORT: ${PORT}
+      DB_HOST: db
+      ENV: production
+    ports:
+      - '3000:${PORT}'
+    volumes:
+      - ./docker/app:/app/src
+    restart: always
+    
