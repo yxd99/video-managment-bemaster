@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Like, Repository } from 'typeorm';
+
+import { Nullable } from '@root/types';
+import { bcrypt } from '@root/utils';
+
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Like, Repository } from 'typeorm';
-import { bcrypt } from '@/utils';
-import { Nullable } from '@/types';
 
 @Injectable()
 export class UsersService {
@@ -23,11 +25,9 @@ export class UsersService {
   }
 
   async findAll(param: string): Promise<User[]> {
-    const users = await this.userRepository.find({
+    return await this.userRepository.find({
       where: [{ username: Like(`%${param}}`) }, { email: Like(`%${param}}`) }],
     });
-
-    return users;
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<object> {
@@ -66,11 +66,10 @@ export class UsersService {
   }
 
   async getUserWithPassword(email: string): Promise<Nullable<User>> {
-    const user = await this.userRepository
+    return await this.userRepository
       .createQueryBuilder('users')
       .addSelect(['users.password'])
       .where('users.email = :email', { email })
       .getOne();
-    return user;
   }
 }

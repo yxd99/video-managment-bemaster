@@ -6,12 +6,13 @@ import {
   HttpStatus,
   Post,
 } from '@nestjs/common';
-import { AuthService } from '@/auth/auth.service';
-import { CreateUserDto } from '@/users/dto/create-user.dto';
-import { LoginDto } from '@/auth/dto/login.dto';
-import { Public } from '@/decorators';
 import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ResponseHttp } from '@/interface';
+
+import { AuthService } from '@root/auth/auth.service';
+import { LoginDto } from '@root/auth/dto/login.dto';
+import { Public } from '@root/decorators';
+import { ResponseHttp } from '@root/interface';
+import { CreateUserDto } from '@root/users/dto/create-user.dto';
 
 @Public()
 @Controller('auth')
@@ -42,7 +43,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiResponse({
-    status: HttpStatus.OK
+    status: HttpStatus.OK,
   })
   @ApiBody({ type: LoginDto })
   async login(@Body() body: LoginDto): Promise<ResponseHttp> {

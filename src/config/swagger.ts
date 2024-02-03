@@ -1,6 +1,7 @@
-import { config } from '@/constants';
 import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+import { config } from '@root/constants';
 
 const configSwagger = new DocumentBuilder()
   .setTitle(config.TITLE)

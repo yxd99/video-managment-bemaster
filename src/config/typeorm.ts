@@ -12,8 +12,8 @@ export function config(): TypeOrmModuleOptions {
     database: configService.get('DB_NAME'),
     type: 'mariadb',
     synchronize: environment !== 'prod',
-    entities: [__dirname + '/**/*.entity{.ts,.js}'],
+    entities: [`${__dirname}/**/*.entity{.ts,.js}`],
     autoLoadEntities: true,
-    migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+    migrations: [`${__dirname}/migrations/**/*{.ts,.js}`],
   };
 }

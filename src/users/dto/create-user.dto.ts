@@ -1,7 +1,9 @@
-import { Match } from '@/decorators';
-import { user } from '@/constants';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+
+import { user } from '@root/constants';
+
+import { Match } from '@root/decorators';
 
 export class CreateUserDto {
   @IsString()
@@ -11,7 +13,7 @@ export class CreateUserDto {
     minLength: user.MIN_LENGTH_USERNAME,
     maxLength: user.MAX_LENGTH_USERNAME,
     description: 'field for save user',
-    example: 'jhon doe'
+    example: 'jhon doe',
   })
   username: string;
 
@@ -20,7 +22,7 @@ export class CreateUserDto {
   @ApiProperty({
     maxLength: user.MAX_LENGTH_EMAIL,
     description: 'email for register in the system',
-    format: 'email'
+    format: 'email',
   })
   email: string;
 
