@@ -4,8 +4,12 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+import { User } from '@root/users/entities/user.entity';
 
 import {
   MAX_LENGTH_VIDEO_TITLE,
@@ -42,6 +46,23 @@ export class Video {
     default: TYPE_PRIVACY.PUBLIC,
   })
   privacy: string;
+
+  @Column({
+    type: 'text',
+  })
+  publicId: string;
+
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
+  credits: string;
+
+  @ManyToOne(() => User, (user) => user.id)
+  @JoinColumn({
+    name: 'user_id',
+  })
+  user: User;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

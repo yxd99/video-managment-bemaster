@@ -19,11 +19,13 @@ export class VideosService {
 
   async create(createVideoDto: CreateVideoDto) {
     const { video, ...data } = createVideoDto;
-    const { secure_url: url } = await this.cloudinaryService.uploadFile(video);
+    const { secure_url: url, public_id: publicId } =
+      await this.cloudinaryService.uploadFile(video);
 
     const videoCreate = await this.videoRepository.save({
       ...data,
       url,
+      publicId,
     });
     return `video ${videoCreate.title} has been create successful`;
   }
@@ -35,16 +37,33 @@ export class VideosService {
     return videos;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} video`;
+  async findOne(id: number): Promise<Video> {
+    return this.videoRepository.findOne({
+      relations: ['user'],
+      where: { id },
+    });
   }
 
-  update(id: number, updateVideoDto: UpdateVideoDto) {
-    return `This action updates a #${id} video`;
+  async update(id: number, updateVideoDto: UpdateVideoDto): Promise<string> {
+    const { video: videoFile, ...infoVideo } = updateVideoDto;
+    const video = await this.findOne(id);
+    if (videoFile) {
+      await this.cloudinaryService.removeFile(video.publicId);
+      const { secure_url: url, public_id: publicId } =
+        await this.cloudinaryService.uploadFile(videoFile);
+      video.url = url;
+      video.publicId = publicId;
+    }
+    await this.videoRepository.update(id, { ...video, ...infoVideo });
+    return 'Video has been updated';
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} video`;
+  async remove(id: number): Promise<string> {
+    const video = await this.findOne(id);
+    if (!video) return 'video doesnt exist';
+    await this.cloudinaryService.removeFile(video.publicId);
+    await this.videoRepository.softRemove(video);
+    return `video has been remove successful`;
   }
 
   async getPublicVideos(): Promise<Video[]> {
