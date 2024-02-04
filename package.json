@@ -85,6 +85,7 @@
       "^@shared/(.*)$": "<rootDir>/src/shared/$1",
       "^@common/(.*)$": "<rootDir>/src/commons/$1",
       "^@decorators/(.*)$": "<rootDir>/src/decorators/$1",
+      "^@schemas/(.*)": "<rootDir>/src/common/schemas/*",
       "^@root/(.*)$": "<rootDir>/src/$1"
     },
     "testRegex": ".*\\.spec\\.ts$",
