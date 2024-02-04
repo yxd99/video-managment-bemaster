@@ -1,3 +1,7 @@
+
+/**
+ * @type {import('eslint').Linter.Config}
+ */
 module.exports = {
   extends: [
     'airbnb-base',
@@ -34,6 +38,7 @@ module.exports = {
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     'no-useless-constructor': 'off',
+    'no-empty-function': ['error', {'allow': ['constructors']}],
     'import/prefer-default-export': 'off',
     'no-restricted-imports': [
       'error',

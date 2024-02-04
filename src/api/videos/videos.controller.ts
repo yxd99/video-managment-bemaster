@@ -18,7 +18,9 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+import { PayloadDto } from '@root/auth/dto/payload.dto';
 import { Public } from '@root/decorators';
+import { Payload } from '@root/decorators/payload.decorator';
 
 import { MAX_SIZE_VIDEO } from './constants';
 import { CreateVideoDto } from './dto/create-video.dto';
@@ -50,8 +52,9 @@ export class VideosController {
 
   @Public()
   @Get()
-  findAll(@Req() req) {
-    return this.videosService.findAll(req.isAuthenticated);
+  findAll(@Payload() payload: PayloadDto) {
+    const isLogged = Boolean(payload);
+    return this.videosService.findAll(isLogged);
   }
 
   @Get(':id')
