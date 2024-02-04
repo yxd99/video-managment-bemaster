@@ -10,21 +10,24 @@ import {
   ParseFilePipe,
   FileTypeValidator,
   UploadedFile,
-  MaxFileSizeValidator,
-  Req,
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  InternalServerErrorException,
+  MaxFileSizeValidator,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { PayloadDto } from '@root/auth/dto/payload.dto';
 import { Public } from '@root/decorators';
 import { Payload } from '@root/decorators/payload.decorator';
+import { ResponseHttp } from '@root/interface';
 
-import { MAX_SIZE_VIDEO } from './constants';
+import { MAX_SIZE_VIDEO, TYPE_PRIVACY } from './constants';
 import { CreateVideoDto } from './dto/create-video.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
+import { Video } from './entities/video.entity';
 import { VideosService } from './videos.service';
 
 @Controller('videos')
@@ -33,7 +36,7 @@ export class VideosController {
 
   @Post()
   @UseInterceptors(FileInterceptor('video'))
-  create(
+  async create(
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -44,32 +47,54 @@ export class VideosController {
     )
     video: Express.Multer.File,
     @Body() createVideoDto: CreateVideoDto,
-    @Req() { user: { id: userId } },
-  ) {
-    const createVideo = { ...createVideoDto, video, userId };
-    return this.videosService.create(createVideo);
+    @Payload() payload: PayloadDto,
+  ): Promise<ResponseHttp> {
+    try {
+      const createVideo = { ...createVideoDto, video, userId: payload.userId };
+      return await this.videosService.create(createVideo);
+    } catch (error) {
+      throw this.handleServiceError(error);
+    }
   }
 
   @Public()
   @Get()
-  findAll(@Payload() payload: PayloadDto) {
-    const isLogged = Boolean(payload);
-    return this.videosService.findAll(isLogged);
+  async findAll(@Payload() payload: PayloadDto): Promise<Video[]> {
+    try {
+      const isLogged = Boolean(payload);
+      return await this.videosService.findAll(isLogged);
+    } catch (error) {
+      throw this.handleServiceError(error);
+    }
   }
 
+  @Public()
   @Get(':id')
-  async findOne(@Param('id') id: number) {
-    const video = await this.videosService.findOne(id);
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Payload() payload: PayloadDto,
+  ): Promise<Video> {
+    try {
+      const video = await this.videosService.findOne(id);
 
-    if (video == null) throw new NotFoundException('video not exist');
-    return video;
+      if (!video) {
+        throw new NotFoundException('Video not found');
+      }
+
+      if (!payload && video.privacy === TYPE_PRIVACY.PRIVATE) {
+        throw new ForbiddenException('This video is private');
+      }
+
+      return video;
+    } catch (error) {
+      throw this.handleServiceError(error);
+    }
   }
 
   @Patch(':id')
   @UseInterceptors(FileInterceptor('video'))
   async update(
-    @Req() { user: { id: userId } },
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateVideoDto: UpdateVideoDto,
     @UploadedFile(
       new ParseFilePipe({
@@ -81,27 +106,45 @@ export class VideosController {
       }),
     )
     video: Express.Multer.File,
-  ) {
-    await this.isOwnerVideo(id, userId);
-    if (Object.entries(updateVideoDto).length === 0)
-      throw new BadRequestException('should send data for update');
-    const updateVideo = {
-      ...updateVideoDto,
-    };
-    if (video) {
-      updateVideo.video = video;
+  ): Promise<ResponseHttp> {
+    try {
+      this.validateUpdateVideoDto(updateVideoDto);
+
+      const updateVideo = { ...updateVideoDto };
+      if (video) {
+        updateVideo.video = video;
+      }
+
+      return await this.videosService.update(+id, updateVideo);
+    } catch (error) {
+      throw this.handleServiceError(error);
     }
-    return this.videosService.update(+id, updateVideo);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.videosService.remove(+id);
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<ResponseHttp> {
+    try {
+      return await this.videosService.remove(id);
+    } catch (error) {
+      throw this.handleServiceError(error);
+    }
   }
 
-  async isOwnerVideo(videoId: number, userId: number): Promise<void> {
-    const video = await this.findOne(videoId);
-    if (video.user.id !== userId)
-      throw new ForbiddenException('you are not the owner of this video');
+  private validateUpdateVideoDto(updateVideoDto: UpdateVideoDto): void {
+    if (Object.entries(updateVideoDto).length === 0) {
+      throw new BadRequestException('Should send data for update');
+    }
+  }
+
+  private handleServiceError(error: unknown): never {
+    if (
+      error instanceof BadRequestException ||
+      error instanceof NotFoundException ||
+      error instanceof ForbiddenException
+    ) {
+      throw error;
+    } else {
+      throw new InternalServerErrorException('Internal Server Error');
+    }
   }
 }

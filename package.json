@@ -80,6 +80,12 @@
       "ts"
     ],
     "rootDir": "./",
+    "moduleNameMapper": {
+      "^@root/(.*)$": "<rootDir>/src/$1",
+      "^@shared/(.*)$": "<rootDir>/src/shared/$1",
+      "^@api/(.*)$": "<rootDir>/src/api/$1",
+      "^@/(.*)$": "<rootDir>/src//$1"
+    },
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"

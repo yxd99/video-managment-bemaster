@@ -1,7 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { ResponseHttp } from '@root/interface';
 import { CloudinaryService } from '@shared/cloudinary/cloudinary.service';
 
 import { TYPE_PRIVACY } from './constants';
@@ -17,17 +22,24 @@ export class VideosService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(createVideoDto: CreateVideoDto) {
-    const { video, ...data } = createVideoDto;
-    const { secure_url: url, public_id: publicId } =
-      await this.cloudinaryService.uploadFile(video);
+  async create(createVideoDto: CreateVideoDto): Promise<ResponseHttp> {
+    try {
+      const { video, ...data } = createVideoDto;
+      const { secure_url: url, public_id: publicId } =
+        await this.cloudinaryService.uploadFile(video);
 
-    const videoCreate = await this.videoRepository.save({
-      ...data,
-      url,
-      publicId,
-    });
-    return `video ${videoCreate.title} has been create successful`;
+      const videoCreate = await this.videoRepository.save({
+        ...data,
+        url,
+        publicId,
+      });
+
+      return {
+        message: `Video ${videoCreate.title} has been created successfully`,
+      };
+    } catch (error) {
+      throw new BadRequestException('Error creating video');
+    }
   }
 
   async findAll(isAuthenticated: boolean): Promise<Video[]> {
@@ -41,31 +53,57 @@ export class VideosService {
     const whereCondition = isAuthenticated
       ? {}
       : { privacy: TYPE_PRIVACY.PUBLIC };
-    return this.videoRepository.findOne({
+
+    const video = await this.videoRepository.findOne({
       relations: ['user'],
       where: { id, ...whereCondition },
     });
-  }
 
-  async update(id: number, updateVideoDto: UpdateVideoDto): Promise<string> {
-    const { video: videoFile, ...infoVideo } = updateVideoDto;
-    const video = await this.findOne(id);
-    if (videoFile) {
-      await this.cloudinaryService.removeFile(video.publicId);
-      const { secure_url: url, public_id: publicId } =
-        await this.cloudinaryService.uploadFile(videoFile);
-      video.url = url;
-      video.publicId = publicId;
+    if (!video) {
+      throw new NotFoundException('Video not found');
     }
-    await this.videoRepository.update(id, { ...video, ...infoVideo });
-    return 'Video has been updated';
+
+    return video;
   }
 
-  async remove(id: number): Promise<string> {
-    const video = await this.findOne(id);
-    if (!video) return 'video doesnt exist';
-    await this.cloudinaryService.removeFile(video.publicId);
-    await this.videoRepository.softRemove(video);
-    return `video has been remove successful`;
+  async update(
+    id: number,
+    updateVideoDto: UpdateVideoDto,
+  ): Promise<ResponseHttp> {
+    try {
+      const { video: videoFile, ...infoVideo } = updateVideoDto;
+      const video = await this.findOne(id);
+
+      if (videoFile) {
+        await this.cloudinaryService.removeFile(video.publicId);
+        const { secure_url: url, public_id: publicId } =
+          await this.cloudinaryService.uploadFile(videoFile);
+        video.url = url;
+        video.publicId = publicId;
+      }
+
+      await this.videoRepository.save({ ...video, ...infoVideo });
+
+      return { message: 'Video has been updated' };
+    } catch (error) {
+      throw new BadRequestException('Error updating video');
+    }
+  }
+
+  async remove(id: number): Promise<ResponseHttp> {
+    try {
+      const video = await this.findOne(id);
+
+      if (!video) {
+        throw new NotFoundException('Video not found');
+      }
+
+      await this.cloudinaryService.removeFile(video.publicId);
+      await this.videoRepository.remove(video);
+
+      return { message: `Video has been removed successfully` };
+    } catch (error) {
+      throw new BadRequestException('Error removing video');
+    }
   }
 }
