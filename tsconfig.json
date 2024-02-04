@@ -20,8 +20,9 @@
     "paths": {
       "@api/*": ["./src/api/*"],
       "@shared/*": ["./src/shared/*"],
+      "@commons/*": ["./src/commons/*"],
+      "@decorators/*": ["./src/decorators/*"],
       "@root/*": ["./src/*"],
-      "@/*": ["./src/*"]
     }
   }
 }
