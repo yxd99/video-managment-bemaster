@@ -3,14 +3,13 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
+import { AuthModule } from '@api/auth/auth.module';
 import { CommentsModule } from '@api/comments/comments.module';
+import { UsersModule } from '@api/users/users.module';
 import { VideoLikesModule } from '@api/video-likes/video-likes.module';
-
-import { UsersModule } from './api/users/users.module';
-import { VideosModule } from './api/videos/videos.module';
-import { AuthModule } from './auth/auth.module';
-import { typeorm } from './commons/config';
-import { CloudinaryModule } from './shared/cloudinary/cloudinary.module';
+import { VideosModule } from '@api/videos/videos.module';
+import { typeorm } from '@common/config';
+import { CloudinaryModule } from '@shared/cloudinary/cloudinary.module';
 
 @Module({
   imports: [

@@ -1,7 +1,8 @@
-import { user } from '@commons/constants';
-import { Match } from '@shared/decorators';
+import { user } from '@common/constants';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+
+import { Match } from '@shared/decorators';
 
 export class CreateUserDto {
   @IsString()

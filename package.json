@@ -83,7 +83,7 @@
     "moduleNameMapper": {
       "^@api/(.*)$": "<rootDir>/src/api/$1",
       "^@shared/(.*)$": "<rootDir>/src/shared/$1",
-      "^@commons/(.*)$": "<rootDir>/src/commons/$1",
+      "^@common/(.*)$": "<rootDir>/src/commons/$1",
       "^@decorators/(.*)$": "<rootDir>/src/decorators/$1",
       "^@root/(.*)$": "<rootDir>/src/$1"
     },

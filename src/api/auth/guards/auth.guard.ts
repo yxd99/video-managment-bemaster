@@ -1,4 +1,4 @@
-import { publicData } from '@commons/constants';
+import { publicData } from '@common/constants';
 import {
   CanActivate,
   ExecutionContext,
