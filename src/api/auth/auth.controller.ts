@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { AuthService } from '@root/auth/auth.service';
-import { LoginDto } from '@root/auth/dto/login.dto';
+import { AuthService } from '@api/auth/auth.service';
+import { LoginDto } from '@api/auth/dto/login.dto';
 import { Public } from '@root/decorators';
 import { ResponseHttp } from '@root/interface';
 import { CreateUserDto } from '@root/users/dto/create-user.dto';
