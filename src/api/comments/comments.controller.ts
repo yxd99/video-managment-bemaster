@@ -11,7 +11,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { Public } from '@shared/decorators';
+import { Public } from '@common/guards/public.guard';
 
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';

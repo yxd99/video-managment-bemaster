@@ -20,7 +20,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PayloadDto } from '@root/auth/dto/payload.dto';
 
-import { Public } from '@shared/decorators';
+import { Public } from '@common/guards/public.guard';
 import { Payload } from '@shared/decorators/payload.decorator';
 import { ResponseHttp } from '@shared/interface';
 
