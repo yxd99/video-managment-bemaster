@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UsersService } from '@api/users/users.service';
 import { VideosService } from '@api/videos/videos.service';
+import { ServiceResponse } from '@shared/types';
 
 import { CommentDto } from './dto/comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -11,6 +12,8 @@ import { Comment } from './entities/comment.entity';
 
 @Injectable()
 export class CommentsService {
+  private readonly logger = new Logger(CommentsService.name);
+
   constructor(
     @InjectRepository(Comment)
     private readonly commentRepository: Repository<Comment>,
@@ -18,41 +21,122 @@ export class CommentsService {
     private readonly videosService: VideosService,
   ) {}
 
-  async create(createCommentDto: CommentDto) {
-    const newComment = await this.commentRepository.create({
-      text: createCommentDto.comment,
-    });
-    newComment.user = await this.usersService.findById(createCommentDto.userId);
-    newComment.video = await this.videosService.findOne(
-      createCommentDto.videoId,
-    );
-    await this.commentRepository.save(newComment);
-    return 'comment publish successful';
+  async create(createCommentDto: CommentDto): Promise<ServiceResponse> {
+    try {
+      const { userId, videoId, comment } = createCommentDto;
+
+      const user = await this.usersService.findById(userId);
+      const video = await this.videosService.findOne(videoId);
+
+      const newComment = this.commentRepository.create({
+        text: comment,
+        user,
+        video,
+      });
+
+      await this.commentRepository.save(newComment);
+
+      return { message: 'comment publish successful' };
+    } catch (error) {
+      this.logger.error(`Error creating comment: ${error.message}`);
+      return {
+        error:
+          'Unable to create comment at the moment. Please try again later.',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
+    }
   }
 
-  async findByVideo(videoId: number) {
-    return this.commentRepository.find({
-      relations: ['user', 'video'],
-      where: { video: { id: videoId } },
-    });
+  async findByVideo(videoId: number): Promise<Comment[] | ServiceResponse> {
+    try {
+      return this.commentRepository.find({
+        relations: ['user', 'video'],
+        where: { video: { id: videoId } },
+      });
+    } catch (error) {
+      this.logger.error(`Error fetching comments by video: ${error.message}`);
+      return {
+        error:
+          'Unable to fetch comments at the moment. Please try again later.',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
+    }
   }
 
-  async update(id: number, updateCommentDto: UpdateCommentDto) {
-    await this.commentRepository.update(id, { text: updateCommentDto.comment });
-    return `comment edited successful`;
+  async update(
+    id: number,
+    updateCommentDto: UpdateCommentDto,
+  ): Promise<ServiceResponse> {
+    try {
+      const existingComment = await this.commentRepository.findOneBy({ id });
+
+      if (!existingComment) {
+        return {
+          error: `Comment ${id} not found`,
+          status: HttpStatus.NOT_FOUND,
+        };
+      }
+
+      await this.commentRepository.update(id, {
+        text: updateCommentDto.comment,
+      });
+
+      return { message: 'comment edited successful' };
+    } catch (error) {
+      this.logger.error(`Error updating comment: ${error.message}`);
+      return {
+        error:
+          'Unable to update comment at the moment. Please try again later.',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
+    }
   }
 
-  async remove(id: number) {
-    await this.commentRepository.softDelete(id);
-    return `comment removed successful`;
+  async remove(id: number): Promise<ServiceResponse> {
+    try {
+      const existingComment = await this.commentRepository.findOneBy({ id });
+
+      if (!existingComment) {
+        return {
+          error: `Comment ${id} not found`,
+          status: HttpStatus.NOT_FOUND,
+        };
+      }
+
+      await this.commentRepository.softDelete(id);
+
+      return { message: 'comment removed successful' };
+    } catch (error) {
+      this.logger.error(`Error removing comment: ${error.message}`);
+      return {
+        error:
+          'Unable to remove comment at the moment. Please try again later.',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
+    }
   }
 
-  async findOne(commentId: number) {
-    return this.commentRepository.findOne({
-      relations: ['user', 'video'],
-      where: {
-        id: commentId,
-      },
-    });
+  async findOne(commentId: number): Promise<Comment | ServiceResponse> {
+    try {
+      const comment = await this.commentRepository.findOne({
+        relations: ['user', 'video'],
+        where: { id: commentId },
+      });
+
+      if (!comment) {
+        return {
+          error: `Comment ${commentId} not found`,
+          status: HttpStatus.NOT_FOUND,
+        };
+      }
+
+      return comment;
+    } catch (error) {
+      this.logger.error(`Error fetching comment: ${error.message}`);
+      return {
+        error: 'Unable to fetch comment at the moment. Please try again later.',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
+    }
   }
 }

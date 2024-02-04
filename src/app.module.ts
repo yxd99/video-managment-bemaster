@@ -9,6 +9,7 @@ import { UsersModule } from '@api/users/users.module';
 import { VideoLikesModule } from '@api/video-likes/video-likes.module';
 import { VideosModule } from '@api/videos/videos.module';
 import { typeorm } from '@common/config';
+import { ErrorHandlerModule } from '@common/error-handler/error-handler.module';
 import { CloudinaryModule } from '@shared/cloudinary/cloudinary.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { CloudinaryModule } from '@shared/cloudinary/cloudinary.module';
     CloudinaryModule,
     VideoLikesModule,
     CommentsModule,
+    ErrorHandlerModule,
   ],
   providers: [Logger],
 })
