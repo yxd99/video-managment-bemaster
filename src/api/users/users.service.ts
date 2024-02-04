@@ -27,7 +27,7 @@ export class UsersService {
         message: 'user registered successful',
       };
     } catch (error) {
-      this.logger.error(`Error creating user: ${error.message}`, error.stack);
+      this.logger.error(`Error creating user: ${error}`);
       return {
         error: 'Unable to register user at the moment. Please try again later.',
         status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -73,7 +73,7 @@ export class UsersService {
         message: `user updated`,
       };
     } catch (error) {
-      this.logger.error(`Error updating user: ${error.message}`, error.stack);
+      this.logger.error(`Error updating user: ${error}`);
       return {
         error: 'Unable to update user at the moment. Please try again later.',
         status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -117,7 +117,7 @@ export class UsersService {
         message: `user ${user.username} has been removed successfully`,
       };
     } catch (error) {
-      this.logger.error(`Error removing user: ${error.message}`, error.stack);
+      this.logger.error(`Error removing user: ${error}`);
       return {
         error: 'Unable to remove user at the moment. Please try again later.',
         status: HttpStatus.INTERNAL_SERVER_ERROR,
