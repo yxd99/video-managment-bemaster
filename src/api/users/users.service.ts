@@ -1,14 +1,9 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 
 import { bcrypt } from '@common/utils';
-import { Nullable } from '@shared/types';
+import { Nullable, ServiceResponse } from '@shared/types';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -23,7 +18,7 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<object> {
+  async create(createUserDto: CreateUserDto): Promise<ServiceResponse> {
     try {
       const password = await bcrypt.encrypt(createUserDto.password);
       const newUser = { ...createUserDto, password };
@@ -33,9 +28,10 @@ export class UsersService {
       };
     } catch (error) {
       this.logger.error(`Error creating user: ${error.message}`, error.stack);
-      throw new Error(
-        'Unable to register user at the moment. Please try again later.',
-      );
+      return {
+        error: 'Unable to register user at the moment. Please try again later.',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
     }
   }
 
@@ -45,16 +41,26 @@ export class UsersService {
     });
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<object> {
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<ServiceResponse> {
     try {
       const updateUser = { ...updateUserDto };
 
       if (updateUser?.email) {
-        const user = await this.findByEmail(updateUserDto.email);
-        if (user !== null && user.id !== id) {
-          throw new ConflictException(
-            `Email ${updateUserDto.email} already exists.`,
-          );
+        const userOrError = await this.findByEmail(updateUserDto.email);
+        if ('error' in userOrError) {
+          return userOrError;
+        }
+
+        const user = userOrError as User;
+
+        if (user.id !== id) {
+          return {
+            error: `Email ${updateUserDto.email} already exists.`,
+            status: HttpStatus.CONFLICT,
+          };
         }
       }
 
@@ -68,40 +74,54 @@ export class UsersService {
       };
     } catch (error) {
       this.logger.error(`Error updating user: ${error.message}`, error.stack);
-      throw new Error(
-        'Unable to update user at the moment. Please try again later.',
-      );
+      return {
+        error: 'Unable to update user at the moment. Please try again later.',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
     }
   }
 
-  async findByEmail(email: string): Promise<User> {
+  async findByEmail(email: string): Promise<ServiceResponse | User> {
     try {
       return this.userRepository.findOneByOrFail({ email });
     } catch (error) {
-      throw new NotFoundException(`User with email ${email} not found.`);
+      return {
+        error: `User with email ${email} not found.`,
+        status: HttpStatus.NOT_FOUND,
+      };
     }
   }
 
-  async findById(id: number): Promise<User> {
+  async findById(id: number): Promise<ServiceResponse | User> {
     try {
       return this.userRepository.findOneByOrFail({ id });
     } catch (error) {
-      throw new NotFoundException(`User with id ${id} not found.`);
+      return {
+        error: `User with id ${id} not found.`,
+        status: HttpStatus.NOT_FOUND,
+      };
     }
   }
 
-  async remove(id: number): Promise<object> {
+  async remove(id: number): Promise<ServiceResponse> {
     try {
-      const user = await this.findById(id);
+      const userOrError = await this.findById(id);
+      if ('error' in userOrError) {
+        return userOrError;
+      }
+
+      const user = userOrError as User;
+
       await this.userRepository.softDelete(id);
       return {
         message: `user ${user.username} has been removed successfully`,
       };
     } catch (error) {
       this.logger.error(`Error removing user: ${error.message}`, error.stack);
-      throw new Error(
-        'Unable to remove user at the moment. Please try again later.',
-      );
+      return {
+        error: 'Unable to remove user at the moment. Please try again later.',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
     }
   }
 

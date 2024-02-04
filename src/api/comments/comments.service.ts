@@ -2,6 +2,7 @@ import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { User } from '@api/users/entities/user.entity';
 import { UsersService } from '@api/users/users.service';
 import { VideosService } from '@api/videos/videos.service';
 import { ServiceResponse } from '@shared/types';
@@ -25,7 +26,7 @@ export class CommentsService {
     try {
       const { userId, videoId, comment } = createCommentDto;
 
-      const user = await this.usersService.findById(userId);
+      const user = (await this.usersService.findById(userId)) as User;
       const video = await this.videosService.findOne(videoId);
 
       const newComment = this.commentRepository.create({
