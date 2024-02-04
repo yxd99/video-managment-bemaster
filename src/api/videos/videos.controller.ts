@@ -11,8 +11,9 @@ import {
   FileTypeValidator,
   UploadedFile,
   ParseIntPipe,
-  HttpStatus,
   MaxFileSizeValidator,
+  ForbiddenException,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -46,7 +47,7 @@ export class VideosController {
     @Body() createVideoDto: CreateVideoDto,
     @Payload() payload: PayloadDto,
   ): Promise<ServiceResponse> {
-    const createVideo = { ...createVideoDto, video, userId: payload.userId };
+    const createVideo = { ...createVideoDto, video, user: payload.userId };
     return this.videosService.create(createVideo);
   }
 
@@ -54,9 +55,15 @@ export class VideosController {
   @Get()
   async findAll(
     @Payload() payload: PayloadDto,
+    @Query('search') search: string,
   ): Promise<Video[] | ServiceResponse> {
     const isLogged = Boolean(payload);
-    return this.videosService.findAll(isLogged);
+    const videos = await this.videosService.findAll(isLogged, search);
+
+    if ('error' in videos) {
+      throw videos;
+    }
+    return videos;
   }
 
   @Public()
@@ -74,10 +81,7 @@ export class VideosController {
     const video = videoOrError as Video;
 
     if (!payload && video.privacy === TYPE_PRIVACY.PRIVATE) {
-      return {
-        message: 'This video is private',
-        statusCode: HttpStatus.FORBIDDEN,
-      };
+      throw new ForbiddenException('This video is private');
     }
 
     return video;
@@ -106,7 +110,12 @@ export class VideosController {
   @Delete(':id')
   async remove(
     @Param('id', ParseIntPipe) id: number,
+    @Payload() payload: PayloadDto,
   ): Promise<ServiceResponse> {
-    return this.videosService.remove(id);
+    const response = await this.videosService.remove(id, payload.userId);
+    if ('error' in response) {
+      throw response;
+    }
+    return response;
   }
 }

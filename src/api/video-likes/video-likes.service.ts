@@ -28,7 +28,7 @@ export class VideoLikesService {
       newLike.user = (await this.usersService.findById(like.userId)) as User;
       newLike.video = (await this.videosService.findOne(like.videoId)) as Video;
       await this.videoLikeRepository.save(newLike);
-      return { message: 'Like created' };
+      return { message: 'Like sended successful' };
     } catch (error) {
       this.logger.error(`Error creating like: ${error.message}`);
       return {
@@ -48,7 +48,9 @@ export class VideoLikesService {
       if ('isLike' in like) {
         like.isLike = !like.isLike;
         await this.videoLikeRepository.update(likeId, like);
-        return { message: `like change to ${like.isLike}` };
+        return {
+          message: `${like.isLike ? 'like' : 'dislike'} sended successful`,
+        };
       }
       return {
         message: 'Invalid response format from database',

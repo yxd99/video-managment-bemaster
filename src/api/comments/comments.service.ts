@@ -27,9 +27,18 @@ export class CommentsService {
     try {
       const { userId, videoId, comment } = createCommentDto;
 
-      const user = (await this.usersService.findById(userId)) as User;
-      const video = (await this.videosService.findOne(videoId)) as Video;
+      const userComment = await this.usersService.findById(userId);
+      if ('error' in userComment) {
+        throw userComment;
+      }
+      const user = userComment as User;
+      console.log({ userId });
+      const videoVerication = await this.videosService.findOne(videoId);
+      if ('error' in videoVerication) {
+        throw videoVerication;
+      }
 
+      const video = videoVerication as Video;
       const newComment = this.commentRepository.create({
         text: comment,
         user,
@@ -40,6 +49,10 @@ export class CommentsService {
 
       return { message: 'comment publish successful' };
     } catch (error) {
+      if ('error' in error) {
+        this.logger.error(`Error creating comment: ${error}`);
+        throw error;
+      }
       this.logger.error(`Error creating comment: ${error.message}`);
       return {
         message:
@@ -51,14 +64,20 @@ export class CommentsService {
 
   async findByVideo(videoId: number): Promise<Comment[] | ServiceResponse> {
     try {
-      return this.commentRepository.find({
-        relations: ['user', 'video'],
-        where: { video: { id: videoId } },
-      });
+      const getVideo = await this.videosService.findOne(videoId);
+      if ('error' in getVideo) {
+        throw getVideo;
+      }
+      const video = getVideo as Video;
+      return video.comments;
     } catch (error) {
+      if ('error' in error) {
+        this.logger.error(`Error fetching comments by video: ${error.error}`);
+        throw error;
+      }
       this.logger.error(`Error fetching comments by video: ${error.message}`);
       return {
-        message:
+        error:
           'Unable to fetch comments at the moment. Please try again later.',
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
@@ -136,7 +155,8 @@ export class CommentsService {
     } catch (error) {
       this.logger.error(`Error fetching comment: ${error.message}`);
       return {
-        message: 'Unable to fetch comment at the moment. Please try again later.',
+        message:
+          'Unable to fetch comment at the moment. Please try again later.',
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }

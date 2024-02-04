@@ -1,6 +1,6 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { CloudinaryService } from '@shared/cloudinary/cloudinary.service';
 import { ServiceResponse } from '@shared/types';
@@ -36,7 +36,7 @@ export class VideosService {
         message: `Video ${videoCreate.title} has been created successfully`,
       };
     } catch (error) {
-      this.logger.error(`Error creating video: ${error.message}`, error.stack);
+      this.logger.error(`Error creating video: ${error.message}`);
       return {
         message: 'Error creating video',
         statusCode: HttpStatus.BAD_REQUEST,
@@ -46,57 +46,40 @@ export class VideosService {
 
   async findAll(
     isAuthenticated: boolean,
-    query?: string,
+    query: string = '',
   ): Promise<Video[] | ServiceResponse> {
     try {
-      const whereCondition = isAuthenticated
-        ? {}
-        : { privacy: TYPE_PRIVACY.PUBLIC };
+      const queryBuilder = `(videos.title LIKE :query OR videos.description LIKE :query OR videos.credits LIKE :query) ${isAuthenticated ? '' : 'AND privacy = :privacy'}`;
 
-      let videos: Video[] | ServiceResponse;
-
-      if (query) {
-        videos = await this.videoRepository.find({
-          where: {
-            ...whereCondition,
-            title: Like(`%${query}%`),
-            description: Like(`${query}`),
-            credits: Like(`${query}`),
-          },
-        });
-      } else {
-        videos = await this.videoRepository.find({ where: whereCondition });
-      }
+      const videos = await this.videoRepository
+        .createQueryBuilder('videos')
+        .innerJoinAndSelect('videos.user', 'users')
+        .leftJoinAndSelect('videos.comments', 'video')
+        .where(queryBuilder, {
+          query: `%${query}%`,
+          privacy: TYPE_PRIVACY.PUBLIC,
+        })
+        .getMany();
 
       if (!videos || (Array.isArray(videos) && videos.length === 0)) {
-        return {
-          error: 'Videos not found',
-          statusCode: HttpStatus.NOT_FOUND,
-        };
+        return [];
       }
 
       return videos;
     } catch (error) {
-      this.logger.error(`Error fetching videos: ${error.message}`, error.stack);
+      this.logger.error(`Error fetching videos: ${error.message}`);
       return {
-        message: 'Error fetching videos',
+        error: 'Error fetching videos',
         statusCode: HttpStatus.BAD_REQUEST,
       };
     }
   }
 
-  async findOne(
-    id: number,
-    isAuthenticated?: boolean,
-  ): Promise<Video | ServiceResponse> {
+  async findOne(id: number): Promise<Video | ServiceResponse> {
     try {
-      const whereCondition = isAuthenticated
-        ? {}
-        : { privacy: TYPE_PRIVACY.PUBLIC };
-
       const video = await this.videoRepository.findOne({
-        relations: ['user'],
-        where: { id, ...whereCondition },
+        relations: ['user', 'comments'],
+        where: { id },
       });
 
       if (!video) {
@@ -108,9 +91,13 @@ export class VideosService {
 
       return video;
     } catch (error) {
-      this.logger.error(`Error fetching video: ${error.message}`, error.stack);
+      if ('error' in error) {
+        this.logger.error(`Error fetching video: ${error}`);
+        throw error;
+      }
+      this.logger.error(`Error fetching video: ${error.message}`);
       return {
-        message: 'Error fetching video',
+        error: 'Error fetching video',
         statusCode: HttpStatus.BAD_REQUEST,
       };
     }
@@ -142,15 +129,15 @@ export class VideosService {
 
       return { message: 'Video has been updated' };
     } catch (error) {
-      this.logger.error(`Error updating video: ${error.message}`, error.stack);
+      this.logger.error(`Error updating video: ${error.message}`);
       return {
-        message: 'Error updating video',
+        error: 'Error updating video',
         statusCode: HttpStatus.BAD_REQUEST,
       };
     }
   }
 
-  async remove(id: number): Promise<ServiceResponse> {
+  async remove(id: number, userId: number): Promise<ServiceResponse> {
     try {
       const videoOrError = await this.findOne(id);
 
@@ -160,14 +147,24 @@ export class VideosService {
 
       const video = videoOrError as Video;
 
-      await this.cloudinaryService.removeFile(video.publicId);
-      await this.videoRepository.remove(video);
+      if (video.user.id !== userId) {
+        return {
+          error: 'you are not owner of this video',
+          statusCode: HttpStatus.FORBIDDEN,
+        };
+      }
 
+      await this.cloudinaryService.removeFile(video.publicId);
+      await this.videoRepository.softRemove(video);
       return { message: `Video has been removed successfully` };
     } catch (error) {
-      this.logger.error(`Error removing video: ${error.message}`, error.stack);
+      if ('error' in error) {
+        this.logger.error(`Error removing video: ${error.error}`);
+        return error;
+      }
+      this.logger.error(`Error removing video: ${error.message}`);
       return {
-        message: 'Error removing video',
+        error: 'Error removing video',
         statusCode: HttpStatus.BAD_REQUEST,
       };
     }
