@@ -8,7 +8,6 @@ import {
   Delete,
   Req,
   ForbiddenException,
-  NotFoundException,
 } from '@nestjs/common';
 
 import { Public } from '@common/guards/public.guard';
@@ -49,7 +48,7 @@ export class CommentsController {
     const commentOrServiceResponse = await this.commentsService.findOne(id);
 
     if ('error' in commentOrServiceResponse) {
-      throw new NotFoundException(commentOrServiceResponse.error);
+      throw commentOrServiceResponse;
     }
 
     return commentOrServiceResponse;

@@ -21,6 +21,7 @@ export class UsersService {
   async create(createUserDto: CreateUserDto): Promise<ServiceResponse> {
     try {
       const password = await bcrypt.encrypt(createUserDto.password);
+
       const newUser = { ...createUserDto, password };
       await this.userRepository.save(newUser);
       return {
@@ -30,7 +31,7 @@ export class UsersService {
       this.logger.error(`Error creating user: ${error}`);
       return {
         error: 'Unable to register user at the moment. Please try again later.',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
   }
@@ -51,7 +52,7 @@ export class UsersService {
       if (updateUser?.email) {
         const userOrError = await this.findByEmail(updateUserDto.email);
         if ('error' in userOrError) {
-          return userOrError;
+          throw userOrError;
         }
 
         const user = userOrError as User;
@@ -59,7 +60,7 @@ export class UsersService {
         if (user.id !== id) {
           return {
             error: `Email ${updateUserDto.email} already exists.`,
-            status: HttpStatus.CONFLICT,
+            statusCode: HttpStatus.CONFLICT,
           };
         }
       }
@@ -76,29 +77,29 @@ export class UsersService {
       this.logger.error(`Error updating user: ${error}`);
       return {
         error: 'Unable to update user at the moment. Please try again later.',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
   }
 
   async findByEmail(email: string): Promise<ServiceResponse | User> {
     try {
-      return this.userRepository.findOneByOrFail({ email });
+      return await this.userRepository.findOneByOrFail({ email });
     } catch (error) {
       return {
         error: `User with email ${email} not found.`,
-        status: HttpStatus.NOT_FOUND,
+        statusCode: HttpStatus.NOT_FOUND,
       };
     }
   }
 
   async findById(id: number): Promise<ServiceResponse | User> {
     try {
-      return this.userRepository.findOneByOrFail({ id });
+      return await this.userRepository.findOneByOrFail({ id });
     } catch (error) {
       return {
         error: `User with id ${id} not found.`,
-        status: HttpStatus.NOT_FOUND,
+        statusCode: HttpStatus.NOT_FOUND,
       };
     }
   }
@@ -107,7 +108,7 @@ export class UsersService {
     try {
       const userOrError = await this.findById(id);
       if ('error' in userOrError) {
-        return userOrError;
+        throw userOrError;
       }
 
       const user = userOrError as User;
@@ -120,7 +121,7 @@ export class UsersService {
       this.logger.error(`Error removing user: ${error}`);
       return {
         error: 'Unable to remove user at the moment. Please try again later.',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
   }

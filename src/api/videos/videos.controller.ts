@@ -68,13 +68,16 @@ export class VideosController {
     const videoOrError = await this.videosService.findOne(id);
 
     if ('error' in videoOrError) {
-      return videoOrError;
+      throw videoOrError;
     }
 
     const video = videoOrError as Video;
 
     if (!payload && video.privacy === TYPE_PRIVACY.PRIVATE) {
-      return { error: 'This video is private', status: HttpStatus.FORBIDDEN };
+      return {
+        message: 'This video is private',
+        statusCode: HttpStatus.FORBIDDEN,
+      };
     }
 
     return video;

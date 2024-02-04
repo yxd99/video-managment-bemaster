@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 
 import { User } from '@api/users/entities/user.entity';
 import { UsersService } from '@api/users/users.service';
+import { Video } from '@api/videos/entities/video.entity';
 import { VideosService } from '@api/videos/videos.service';
 import { ServiceResponse } from '@shared/types';
 
@@ -27,7 +28,7 @@ export class CommentsService {
       const { userId, videoId, comment } = createCommentDto;
 
       const user = (await this.usersService.findById(userId)) as User;
-      const video = await this.videosService.findOne(videoId);
+      const video = (await this.videosService.findOne(videoId)) as Video;
 
       const newComment = this.commentRepository.create({
         text: comment,
@@ -41,9 +42,9 @@ export class CommentsService {
     } catch (error) {
       this.logger.error(`Error creating comment: ${error.message}`);
       return {
-        error:
+        message:
           'Unable to create comment at the moment. Please try again later.',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
   }
@@ -57,9 +58,9 @@ export class CommentsService {
     } catch (error) {
       this.logger.error(`Error fetching comments by video: ${error.message}`);
       return {
-        error:
+        message:
           'Unable to fetch comments at the moment. Please try again later.',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
   }
@@ -74,7 +75,7 @@ export class CommentsService {
       if (!existingComment) {
         return {
           error: `Comment ${id} not found`,
-          status: HttpStatus.NOT_FOUND,
+          statusCode: HttpStatus.NOT_FOUND,
         };
       }
 
@@ -86,9 +87,9 @@ export class CommentsService {
     } catch (error) {
       this.logger.error(`Error updating comment: ${error.message}`);
       return {
-        error:
+        message:
           'Unable to update comment at the moment. Please try again later.',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
   }
@@ -100,7 +101,7 @@ export class CommentsService {
       if (!existingComment) {
         return {
           error: `Comment ${id} not found`,
-          status: HttpStatus.NOT_FOUND,
+          statusCode: HttpStatus.NOT_FOUND,
         };
       }
 
@@ -110,9 +111,9 @@ export class CommentsService {
     } catch (error) {
       this.logger.error(`Error removing comment: ${error.message}`);
       return {
-        error:
+        message:
           'Unable to remove comment at the moment. Please try again later.',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
   }
@@ -127,7 +128,7 @@ export class CommentsService {
       if (!comment) {
         return {
           error: `Comment ${commentId} not found`,
-          status: HttpStatus.NOT_FOUND,
+          statusCode: HttpStatus.NOT_FOUND,
         };
       }
 
@@ -135,8 +136,8 @@ export class CommentsService {
     } catch (error) {
       this.logger.error(`Error fetching comment: ${error.message}`);
       return {
-        error: 'Unable to fetch comment at the moment. Please try again later.',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Unable to fetch comment at the moment. Please try again later.',
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
   }

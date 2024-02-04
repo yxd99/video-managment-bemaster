@@ -38,8 +38,8 @@ export class VideosService {
     } catch (error) {
       this.logger.error(`Error creating video: ${error.message}`, error.stack);
       return {
-        error: 'Error creating video',
-        status: HttpStatus.BAD_REQUEST,
+        message: 'Error creating video',
+        statusCode: HttpStatus.BAD_REQUEST,
       };
     }
   }
@@ -71,7 +71,7 @@ export class VideosService {
       if (!videos || (Array.isArray(videos) && videos.length === 0)) {
         return {
           error: 'Videos not found',
-          status: HttpStatus.NOT_FOUND,
+          statusCode: HttpStatus.NOT_FOUND,
         };
       }
 
@@ -79,8 +79,8 @@ export class VideosService {
     } catch (error) {
       this.logger.error(`Error fetching videos: ${error.message}`, error.stack);
       return {
-        error: 'Error fetching videos',
-        status: HttpStatus.BAD_REQUEST,
+        message: 'Error fetching videos',
+        statusCode: HttpStatus.BAD_REQUEST,
       };
     }
   }
@@ -102,7 +102,7 @@ export class VideosService {
       if (!video) {
         return {
           error: 'Video not found',
-          status: HttpStatus.NOT_FOUND,
+          statusCode: HttpStatus.NOT_FOUND,
         };
       }
 
@@ -110,8 +110,8 @@ export class VideosService {
     } catch (error) {
       this.logger.error(`Error fetching video: ${error.message}`, error.stack);
       return {
-        error: 'Error fetching video',
-        status: HttpStatus.BAD_REQUEST,
+        message: 'Error fetching video',
+        statusCode: HttpStatus.BAD_REQUEST,
       };
     }
   }
@@ -125,7 +125,7 @@ export class VideosService {
       const videoOrError = await this.findOne(id);
 
       if ('error' in videoOrError) {
-        return videoOrError;
+        throw videoOrError;
       }
 
       const video = videoOrError as Video;
@@ -144,8 +144,8 @@ export class VideosService {
     } catch (error) {
       this.logger.error(`Error updating video: ${error.message}`, error.stack);
       return {
-        error: 'Error updating video',
-        status: HttpStatus.BAD_REQUEST,
+        message: 'Error updating video',
+        statusCode: HttpStatus.BAD_REQUEST,
       };
     }
   }
@@ -155,7 +155,7 @@ export class VideosService {
       const videoOrError = await this.findOne(id);
 
       if ('error' in videoOrError) {
-        return videoOrError;
+        throw videoOrError;
       }
 
       const video = videoOrError as Video;
@@ -167,8 +167,8 @@ export class VideosService {
     } catch (error) {
       this.logger.error(`Error removing video: ${error.message}`, error.stack);
       return {
-        error: 'Error removing video',
-        status: HttpStatus.BAD_REQUEST,
+        message: 'Error removing video',
+        statusCode: HttpStatus.BAD_REQUEST,
       };
     }
   }

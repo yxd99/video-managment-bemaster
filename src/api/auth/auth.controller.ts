@@ -1,18 +1,12 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from '@api/auth/auth.service';
+import { Auth } from '@api/auth/auth.type';
 import { LoginDto } from '@api/auth/dto/login.dto';
 import { CreateUserDto } from '@api/users/dto/create-user.dto';
 import { Public } from '@common/guards/public.guard';
-import { ResponseHttp } from '@shared/interface';
+import { ServiceResponse } from '@shared/types';
 
 @Public()
 @Controller('auth')
@@ -23,21 +17,19 @@ export class AuthController {
   @Post('register')
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'returns a jwt if the user succeeded in registering.',
+    description: 'Returns a JWT if the user succeeded in registering.',
   })
   @ApiBody({ type: CreateUserDto })
-  async register(@Body() body: CreateUserDto): Promise<ResponseHttp> {
+  async register(@Body() body: CreateUserDto): Promise<Auth | ServiceResponse> {
     const response = await this.authService.register(body);
-    if (response?.error) {
-      throw new BadRequestException(response.error);
+    if ('error' in response) {
+      throw response;
     }
-    const { token } = await this.login({
+
+    return this.login({
       email: body.email,
       password: body.validatePassword,
     });
-    return {
-      token,
-    };
   }
 
   @Post('login')
@@ -46,11 +38,13 @@ export class AuthController {
     status: HttpStatus.OK,
   })
   @ApiBody({ type: LoginDto })
-  async login(@Body() body: LoginDto): Promise<ResponseHttp> {
-    const { error, token } = await this.authService.login(body);
-    if (error) {
-      throw new BadRequestException(error);
+  async login(@Body() body: LoginDto): Promise<Auth> {
+    const response = await this.authService.login(body);
+    if ('error' in response) {
+      throw response;
     }
+
+    const { token } = response as Auth;
     return { token };
   }
 }

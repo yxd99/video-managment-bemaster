@@ -1,6 +1,3 @@
-export type ServiceResponse =
-  | { message: string }
-  | {
-      error: string;
-      status: number;
-    };
+import { Error } from './error';
+
+export type ServiceResponse = { message: string } | Error;

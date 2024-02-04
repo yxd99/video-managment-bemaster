@@ -1,32 +1,35 @@
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost } from '@nestjs/common';
 import { Request, Response } from 'express';
+
+import { ClassValidatorError, Error } from '@shared/types';
 
 @Catch()
 export class CustomErrorFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: ClassValidatorError | Error, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal Server Error';
-
-    if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      message = exception.message;
-    }
-
-    response.status(status).json({
-      statusCode: status,
-      timestamp: new Date().toISOString(),
+    const customException = {
       path: request.url,
-      message,
-    });
+      timestamp: new Date().toISOString(),
+      status: null,
+      message: null,
+    };
+
+    if ('message' in exception) {
+      const { response: exceptionClassValidator } =
+        exception as ClassValidatorError;
+      customException.message = {
+        error: exceptionClassValidator.error,
+        details: exceptionClassValidator.message,
+      };
+      customException.status = exceptionClassValidator.statusCode;
+    } else {
+      const exceptionError = exception as Error;
+      customException.message = exceptionError.error;
+      customException.status = exceptionError.statusCode;
+    }
+    response.status(customException.status).json(customException);
   }
 }

@@ -11,7 +11,7 @@ import {
   MAX_LENGTH_VIDEO_TITLE,
   MIN_LENGTH_VIDEO_TITLE,
   TYPE_PRIVACY,
-} from '@/api/videos/constants';
+} from '@api/videos/constants';
 
 export class CreateVideoDto {
   @IsString()

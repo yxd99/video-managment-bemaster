@@ -40,7 +40,7 @@ export class User {
   })
   delete_date: Date;
 
-  checkPassword(password: string) {
+  async checkPassword(password: string) {
     return bcrypt.compare(password, this.password);
   }
 }

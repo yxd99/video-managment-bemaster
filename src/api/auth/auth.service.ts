@@ -1,12 +1,14 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
-import { LoginDto } from '@api/auth/dto/login.dto';
-import { PayloadDto } from '@api/auth/dto/payload.dto';
 import { CreateUserDto } from '@api/users/dto/create-user.dto';
+import { User } from '@api/users/entities/user.entity';
 import { UsersService } from '@api/users/users.service';
-import { bcrypt } from '@common/utils';
-import { ResponseHttp } from '@shared/interface';
+import { ServiceResponse } from '@shared/types';
+
+import { Auth } from './auth.type';
+import { LoginDto } from './dto/login.dto';
+import { PayloadDto } from './dto/payload.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,56 +17,84 @@ export class AuthService {
     private readonly usersService: UsersService,
   ) {}
 
-  async register(createUserDto: CreateUserDto): Promise<ResponseHttp> {
-    const user = await this.usersService.findByEmail(createUserDto.email);
+  async register(
+    createUserDto: CreateUserDto,
+  ): Promise<Auth | ServiceResponse> {
+    try {
+      const existingUser = await this.usersService.findByEmail(
+        createUserDto.email,
+      );
 
-    if (user !== null) {
-      throw new ConflictException(`email ${user.email} already exist`);
-    }
+      if (!('error' in existingUser)) {
+        return {
+          error: `Email ${createUserDto.email} already exists.`,
+          statusCode: HttpStatus.CONFLICT,
+        };
+      }
 
-    await this.usersService.create(createUserDto);
+      await this.usersService.create(createUserDto);
 
-    const { token } = await this.login({
-      email: createUserDto.email,
-      password: createUserDto.password,
-    });
-
-    return {
-      token,
-    };
-  }
-
-  async login(loginDto: LoginDto): Promise<ResponseHttp> {
-    const user = await this.usersService.getUserWithPassword(loginDto.email);
-    if (user === null) {
+      const login = await this.login({
+        email: createUserDto.email,
+        password: createUserDto.password,
+      });
+      if ('error' in login) {
+        throw login;
+      }
+      return login as Auth;
+    } catch (error) {
       return {
-        error: 'unregistered user',
+        error: 'Unable to register user at the moment. Please try again later.',
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
-
-    const validatePassword = await bcrypt.compare(
-      loginDto.password,
-      user.password,
-    );
-
-    if (!validatePassword) {
-      return {
-        error: 'incorrect password',
-      };
-    }
-    const payload: PayloadDto = {
-      userId: user.id,
-      email: user.email,
-    };
-    const token = await this.jwtService.signAsync(payload);
-
-    return {
-      token,
-    };
   }
 
-  async validateUser(email: string, password: string) {
-    const user = await this.usersService.findByEmail(email);
-    return user?.checkPassword(password) ? user : null;
+  async login(loginDto: LoginDto): Promise<Auth | ServiceResponse> {
+    try {
+      const findUser = await this.usersService.findByEmail(loginDto.email);
+
+      if ('error' in findUser) {
+        return {
+          error: 'Unregistered user.',
+          statusCode: HttpStatus.UNAUTHORIZED,
+        };
+      }
+      const user = findUser as User;
+
+      const validatePassword = await this.validateUser(
+        loginDto.email,
+        loginDto.password,
+      );
+
+      if (!validatePassword) {
+        return {
+          error: 'Incorrect password.',
+          statusCode: HttpStatus.UNAUTHORIZED,
+        };
+      }
+
+      const payload: PayloadDto = {
+        userId: user.id,
+        email: user.email,
+      };
+      const token = await this.jwtService.signAsync(payload);
+
+      return { token };
+    } catch (error) {
+      return {
+        error: 'Unable to perform login at the moment. Please try again later.',
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
+    }
+  }
+
+  async validateUser(email: string, password: string): Promise<User | null> {
+    try {
+      const user = (await this.usersService.findByEmail(email)) as User;
+      return (await user?.checkPassword(password)) ? user : null;
+    } catch (error) {
+      return error;
+    }
   }
 }

@@ -32,8 +32,8 @@ export class VideoLikesService {
     } catch (error) {
       this.logger.error(`Error creating like: ${error.message}`);
       return {
-        error: 'Unable to create like at the moment. Please try again later.',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Unable to create like at the moment. Please try again later.',
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
   }
@@ -43,7 +43,7 @@ export class VideoLikesService {
       const like = await this.getLike(likeId);
 
       if ('error' in like) {
-        return like;
+        throw like;
       }
       if ('isLike' in like) {
         like.isLike = !like.isLike;
@@ -51,14 +51,14 @@ export class VideoLikesService {
         return { message: `like change to ${like.isLike}` };
       }
       return {
-        error: 'Invalid response format from database',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Invalid response format from database',
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     } catch (error) {
       this.logger.error(`Error setting like: ${error.message}`);
       return {
-        error: 'Unable to set like at the moment. Please try again later.',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Unable to set like at the moment. Please try again later.',
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
   }
@@ -73,7 +73,7 @@ export class VideoLikesService {
       if (!like) {
         return {
           error: `Like ${likeId} not found`,
-          status: HttpStatus.NOT_FOUND,
+          statusCode: HttpStatus.NOT_FOUND,
         };
       }
 
@@ -81,8 +81,8 @@ export class VideoLikesService {
     } catch (error) {
       this.logger.error(`Error fetching like: ${error.message}`);
       return {
-        error: 'Unable to fetch like at the moment. Please try again later.',
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Unable to fetch like at the moment. Please try again later.',
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
   }
