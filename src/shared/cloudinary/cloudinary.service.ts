@@ -29,24 +29,19 @@ export class CloudinaryService {
 
   async removeFile(publicId: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      try {
-        v2.api.delete_resources(
-          [publicId],
-          { type: 'upload', resource_type: 'video' },
-          (error, result) => {
-            if (error) {
-              this.logger.error(`Error al eliminar el video: ${error.message}`);
-              reject(error);
-            }
+      v2.api.delete_resources(
+        [publicId],
+        { type: 'upload', resource_type: 'video' },
+        (error, result) => {
+          if (error) {
+            this.logger.error(`eror to try delete the video: ${error.message}`);
+            reject(error);
+          }
 
-            this.logger.log(`video with cloudinary id ${publicId} removed`);
-            resolve(result);
-          },
-        );
-      } catch (error) {
-        this.logger.error(`Error al eliminar el video: ${error.message}`);
-        reject(error);
-      }
+          this.logger.log(`video with cloudinary id ${publicId} removed`);
+          resolve(result);
+        },
+      );
     });
   }
 }
