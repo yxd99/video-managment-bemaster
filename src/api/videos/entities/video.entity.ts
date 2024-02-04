@@ -1,4 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger';
 import {
   Column,
   CreateDateColumn,
@@ -9,13 +8,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+import { MAX_LENGTH_VIDEO_TITLE, TYPE_PRIVACY } from '@api/videos/constants';
 import { User } from '@root/users/entities/user.entity';
-
-import {
-  MAX_LENGTH_VIDEO_TITLE,
-  MIN_LENGTH_VIDEO_TITLE,
-  TYPE_PRIVACY,
-} from '../constants';
 
 @Entity('videos')
 export class Video {
@@ -30,13 +24,14 @@ export class Video {
 
   @Column({
     type: 'text',
-    nullable: true,
+    default: '',
   })
   description: string;
 
   @Column({
     type: 'text',
     nullable: false,
+    default: '',
   })
   url: string;
 
@@ -49,12 +44,13 @@ export class Video {
 
   @Column({
     type: 'text',
+    default: '',
   })
   publicId: string;
 
   @Column({
     type: 'text',
-    nullable: true,
+    default: '',
   })
   credits: string;
 

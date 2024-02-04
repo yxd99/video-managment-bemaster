@@ -31,16 +31,19 @@ export class VideosService {
   }
 
   async findAll(isAuthenticated: boolean): Promise<Video[]> {
-    const videos = await this.getPublicVideos();
-    if (isAuthenticated) videos.push(...(await this.getPrivateVideos()));
-
-    return videos;
+    const whereCondition = isAuthenticated
+      ? {}
+      : { privacy: TYPE_PRIVACY.PUBLIC };
+    return this.videoRepository.find({ where: whereCondition });
   }
 
-  async findOne(id: number): Promise<Video> {
+  async findOne(id: number, isAuthenticated?: boolean): Promise<Video> {
+    const whereCondition = isAuthenticated
+      ? {}
+      : { privacy: TYPE_PRIVACY.PUBLIC };
     return this.videoRepository.findOne({
       relations: ['user'],
-      where: { id },
+      where: { id, ...whereCondition },
     });
   }
 
@@ -64,13 +67,5 @@ export class VideosService {
     await this.cloudinaryService.removeFile(video.publicId);
     await this.videoRepository.softRemove(video);
     return `video has been remove successful`;
-  }
-
-  async getPublicVideos(): Promise<Video[]> {
-    return this.videoRepository.findBy({ privacy: TYPE_PRIVACY.PUBLIC });
-  }
-
-  async getPrivateVideos(): Promise<Video[]> {
-    return this.videoRepository.findBy({ privacy: TYPE_PRIVACY.PRIVATE });
   }
 }
