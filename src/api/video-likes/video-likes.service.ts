@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 
 import { User } from '@api/users/entities/user.entity';
 import { UsersService } from '@api/users/users.service';
+import { Video } from '@api/videos/entities/video.entity';
 import { VideosService } from '@api/videos/videos.service';
 import { ServiceResponse } from '@shared/types';
 
@@ -25,7 +26,7 @@ export class VideoLikesService {
     try {
       const newLike = await this.videoLikeRepository.create();
       newLike.user = (await this.usersService.findById(like.userId)) as User;
-      newLike.video = await this.videosService.findOne(like.videoId);
+      newLike.video = (await this.videosService.findOne(like.videoId)) as Video;
       await this.videoLikeRepository.save(newLike);
       return { message: 'Like created' };
     } catch (error) {

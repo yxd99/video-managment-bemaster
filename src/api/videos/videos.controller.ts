@@ -10,19 +10,16 @@ import {
   ParseFilePipe,
   FileTypeValidator,
   UploadedFile,
-  BadRequestException,
-  NotFoundException,
-  ForbiddenException,
-  InternalServerErrorException,
-  MaxFileSizeValidator,
   ParseIntPipe,
+  HttpStatus,
+  MaxFileSizeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { PayloadDto } from '@root/auth/dto/payload.dto';
 
+import { PayloadDto } from '@api/auth/dto/payload.dto';
 import { Public } from '@common/guards/public.guard';
 import { Payload } from '@shared/decorators/payload.decorator';
-import { ResponseHttp } from '@shared/interface';
+import { ServiceResponse } from '@shared/types';
 
 import { MAX_SIZE_VIDEO, TYPE_PRIVACY } from './constants';
 import { CreateVideoDto } from './dto/create-video.dto';
@@ -48,24 +45,18 @@ export class VideosController {
     video: Express.Multer.File,
     @Body() createVideoDto: CreateVideoDto,
     @Payload() payload: PayloadDto,
-  ): Promise<ResponseHttp> {
-    try {
-      const createVideo = { ...createVideoDto, video, userId: payload.userId };
-      return await this.videosService.create(createVideo);
-    } catch (error) {
-      throw this.handleServiceError(error);
-    }
+  ): Promise<ServiceResponse> {
+    const createVideo = { ...createVideoDto, video, userId: payload.userId };
+    return this.videosService.create(createVideo);
   }
 
   @Public()
   @Get()
-  async findAll(@Payload() payload: PayloadDto): Promise<Video[]> {
-    try {
-      const isLogged = Boolean(payload);
-      return await this.videosService.findAll(isLogged);
-    } catch (error) {
-      throw this.handleServiceError(error);
-    }
+  async findAll(
+    @Payload() payload: PayloadDto,
+  ): Promise<Video[] | ServiceResponse> {
+    const isLogged = Boolean(payload);
+    return this.videosService.findAll(isLogged);
   }
 
   @Public()
@@ -73,22 +64,20 @@ export class VideosController {
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @Payload() payload: PayloadDto,
-  ): Promise<Video> {
-    try {
-      const video = await this.videosService.findOne(id);
+  ): Promise<Video | ServiceResponse> {
+    const videoOrError = await this.videosService.findOne(id);
 
-      if (!video) {
-        throw new NotFoundException('Video not found');
-      }
-
-      if (!payload && video.privacy === TYPE_PRIVACY.PRIVATE) {
-        throw new ForbiddenException('This video is private');
-      }
-
-      return video;
-    } catch (error) {
-      throw this.handleServiceError(error);
+    if ('error' in videoOrError) {
+      return videoOrError;
     }
+
+    const video = videoOrError as Video;
+
+    if (!payload && video.privacy === TYPE_PRIVACY.PRIVATE) {
+      return { error: 'This video is private', status: HttpStatus.FORBIDDEN };
+    }
+
+    return video;
   }
 
   @Patch(':id')
@@ -106,45 +95,15 @@ export class VideosController {
       }),
     )
     video: Express.Multer.File,
-  ): Promise<ResponseHttp> {
-    try {
-      this.validateUpdateVideoDto(updateVideoDto);
-
-      const updateVideo = { ...updateVideoDto };
-      if (video) {
-        updateVideo.video = video;
-      }
-
-      return await this.videosService.update(+id, updateVideo);
-    } catch (error) {
-      throw this.handleServiceError(error);
-    }
+  ): Promise<ServiceResponse> {
+    const updateVideo = { ...updateVideoDto, video };
+    return this.videosService.update(id, updateVideo);
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<ResponseHttp> {
-    try {
-      return await this.videosService.remove(id);
-    } catch (error) {
-      throw this.handleServiceError(error);
-    }
-  }
-
-  private validateUpdateVideoDto(updateVideoDto: UpdateVideoDto): void {
-    if (Object.entries(updateVideoDto).length === 0) {
-      throw new BadRequestException('Should send data for update');
-    }
-  }
-
-  private handleServiceError(error: unknown): never {
-    if (
-      error instanceof BadRequestException ||
-      error instanceof NotFoundException ||
-      error instanceof ForbiddenException
-    ) {
-      throw error;
-    } else {
-      throw new InternalServerErrorException('Internal Server Error');
-    }
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<ServiceResponse> {
+    return this.videosService.remove(id);
   }
 }

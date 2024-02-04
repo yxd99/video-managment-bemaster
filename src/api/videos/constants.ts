@@ -3,7 +3,7 @@ export const MAX_LENGTH_VIDEO_TITLE = 40;
 
 export const MAX_LENGTH_VIDEO_DESCRIPTION = 500;
 
-export const MAX_SIZE_VIDEO = 500 * 1024 * 1024;
+export const MAX_SIZE_VIDEO = 20 * 1024 * 1024;
 
 export enum TYPE_PRIVACY {
   PUBLIC = 'public',
