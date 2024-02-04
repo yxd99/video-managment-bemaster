@@ -1,11 +1,12 @@
-import { user } from '@common/constants';
-import { bcrypt } from '@root/utils';
 import {
   Column,
   DeleteDateColumn,
   Entity,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+import * as user from '@api/users/constants';
+import { bcrypt } from '@common/utils';
 
 @Entity('users')
 export class User {
