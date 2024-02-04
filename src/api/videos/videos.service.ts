@@ -6,8 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { ResponseHttp } from '@root/interface';
 import { CloudinaryService } from '@shared/cloudinary/cloudinary.service';
+import { ResponseHttp } from '@shared/interface';
 
 import { TYPE_PRIVACY } from './constants';
 import { CreateVideoDto } from './dto/create-video.dto';

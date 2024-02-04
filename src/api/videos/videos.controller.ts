@@ -18,11 +18,11 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-
 import { PayloadDto } from '@root/auth/dto/payload.dto';
-import { Public } from '@root/decorators';
-import { Payload } from '@root/decorators/payload.decorator';
-import { ResponseHttp } from '@root/interface';
+
+import { Public } from '@shared/decorators';
+import { Payload } from '@shared/decorators/payload.decorator';
+import { ResponseHttp } from '@shared/interface';
 
 import { MAX_SIZE_VIDEO, TYPE_PRIVACY } from './constants';
 import { CreateVideoDto } from './dto/create-video.dto';

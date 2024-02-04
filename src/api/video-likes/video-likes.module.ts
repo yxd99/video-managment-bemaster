@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { UsersModule } from '@api/users/users.module';
 import { VideosModule } from '@api/videos/videos.module';
-import { UsersModule } from '@root/users/users.module';
 
 import { VideoLike } from './entities/video-like.entity';
 import { VideoLikesController } from './video-likes.controller';

@@ -21,7 +21,7 @@
       "@api/*": ["./src/api/*"],
       "@shared/*": ["./src/shared/*"],
       "@commons/*": ["./src/commons/*"],
-      "@decorators/*": ["./src/decorators/*"],
+      "@decorators/*": ["src/shared/decorators/*"],
       "@root/*": ["./src/*"],
     }
   }

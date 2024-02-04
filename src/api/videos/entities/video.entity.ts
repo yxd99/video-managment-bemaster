@@ -8,8 +8,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+import { User } from '@api/users/entities/user.entity';
 import { MAX_LENGTH_VIDEO_TITLE, TYPE_PRIVACY } from '@api/videos/constants';
-import { User } from '@root/users/entities/user.entity';
 
 @Entity('videos')
 export class Video {

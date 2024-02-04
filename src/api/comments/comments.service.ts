@@ -6,8 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { UsersService } from '@api/users/users.service';
 import { VideosService } from '@api/videos/videos.service';
-import { UsersService } from '@root/users/users.service';
 
 import { CommentDto } from './dto/comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';

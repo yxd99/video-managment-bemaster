@@ -2,8 +2,8 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
-import { swagger } from './config';
-import { config } from './constants';
+import { swagger } from './commons/config';
+import { config } from './commons/constants';
 
 async function bootstrap() {
   const port = config.PORT ?? 3000;

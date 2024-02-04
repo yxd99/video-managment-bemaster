@@ -10,9 +10,9 @@ import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from '@api/auth/auth.service';
 import { LoginDto } from '@api/auth/dto/login.dto';
-import { Public } from '@root/decorators';
-import { ResponseHttp } from '@root/interface';
-import { CreateUserDto } from '@root/users/dto/create-user.dto';
+import { Public } from '@shared/decorators';
+import { ResponseHttp } from '@shared/interface';
+import { CreateUserDto } from '@api/users/dto/create-user.dto';
 
 @Public()
 @Controller('auth')

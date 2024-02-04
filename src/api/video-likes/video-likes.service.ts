@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { UsersService } from '@api/users/users.service';
 import { VideosService } from '@api/videos/videos.service';
-import { UsersService } from '@root/users/users.service';
 
 import { VideoLikeDto } from './dto/video-like.dto';
 import { VideoLike } from './entities/video-like.entity';

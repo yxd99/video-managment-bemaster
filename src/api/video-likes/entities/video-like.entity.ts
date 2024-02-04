@@ -8,8 +8,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+import { User } from '@api/users/entities/user.entity';
 import { Video } from '@api/videos/entities/video.entity';
-import { User } from '@root/users/entities/user.entity';
 
 @Entity('video_likes')
 export class VideoLike {

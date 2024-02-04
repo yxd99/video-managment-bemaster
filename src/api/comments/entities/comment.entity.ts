@@ -10,8 +10,8 @@ import {
 } from 'typeorm';
 
 import { MAX_LENGTH_COMMENT } from '@api/comments/constants';
+import { User } from '@api/users/entities/user.entity';
 import { Video } from '@api/videos/entities/video.entity';
-import { User } from '@root/users/entities/user.entity';
 
 @Entity('video_comments')
 export class Comment {

@@ -8,7 +8,7 @@ import { AuthController } from '@api/auth/auth.controller';
 import { AuthService } from '@api/auth/auth.service';
 import { AuthGuard } from '@api/auth/guards/auth.guard';
 import { LocalStrategy, JwtStrategy } from '@api/auth/strategies';
-import { UsersModule } from '@root/users/users.module';
+import { UsersModule } from '@api/users/users.module';
 
 @Module({
   imports: [

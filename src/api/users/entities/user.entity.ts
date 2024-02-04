@@ -1,3 +1,4 @@
+import { user } from '@commons/constants';
 import {
   Column,
   DeleteDateColumn,
@@ -5,7 +6,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-import { user } from '@root/constants';
 import { bcrypt } from '@root/utils';
 
 @Entity('users')
