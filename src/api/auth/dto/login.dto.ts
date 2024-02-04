@@ -1,6 +1,7 @@
-import { user } from '@common/constants';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+
+import * as user from '@api/users/contants';
 
 export class LoginDto {
   @IsEmail()

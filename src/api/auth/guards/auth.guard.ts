@@ -1,4 +1,3 @@
-import { publicData } from '@common/constants';
 import {
   CanActivate,
   ExecutionContext,
@@ -9,6 +8,8 @@ import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+
+import { publicData } from '@common/constants';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
