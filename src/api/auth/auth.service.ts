@@ -90,11 +90,12 @@ export class AuthService {
   }
 
   async validateUser(email: string, password: string): Promise<User | null> {
-    try {
-      const user = (await this.usersService.findByEmail(email)) as User;
-      return (await user?.checkPassword(password)) ? user : null;
-    } catch (error) {
-      return error;
+    const getUser = await this.usersService.getUserWithPassword(email);
+    if ('error' in getUser) {
+      return null;
     }
+    const user = getUser as User;
+
+    return (await user?.checkPassword(password)) ? user : null;
   }
 }

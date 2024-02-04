@@ -126,11 +126,21 @@ export class UsersService {
     }
   }
 
-  async getUserWithPassword(email: string): Promise<Nullable<User>> {
-    return this.userRepository
-      .createQueryBuilder('users')
-      .addSelect(['users.password'])
-      .where('users.email = :email', { email })
-      .getOne();
+  async getUserWithPassword(
+    email: string,
+  ): Promise<Nullable<User> | ServiceResponse> {
+    try {
+      return this.userRepository
+        .createQueryBuilder('users')
+        .addSelect(['users.password'])
+        .where('users.email = :email', { email })
+        .getOne();
+    } catch (error) {
+      this.logger.error(`Error get user with password: ${error}`);
+      return {
+        error: 'Service login unavaible',
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
+    }
   }
 }
