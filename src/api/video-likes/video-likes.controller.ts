@@ -1,5 +1,7 @@
 import { Controller, Post, Param, Req } from '@nestjs/common';
 
+import { ServiceResponse } from '@shared/types';
+
 import { VideoLikesService } from './video-likes.service';
 
 @Controller('video-likes')
@@ -10,11 +12,14 @@ export class VideoLikesController {
   async like(
     @Param('videoId') videoId: number,
     @Req() { user: { id: userId } },
-  ) {
+  ): Promise<ServiceResponse> {
     const like = await this.videoLikesService.getLikeId({ videoId, userId });
+
     if (like === null) {
-      return this.videoLikesService.create({ videoId, userId });
+      await this.videoLikesService.create({ videoId, userId });
+      return { message: 'Like created successfully' };
     }
+
     return this.videoLikesService.setLike(like);
   }
 }
