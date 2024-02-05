@@ -1,4 +1,3 @@
-import { Like } from '@api/likes/entities/like.entity';
 import {
   Column,
   CreateDateColumn,
@@ -11,6 +10,7 @@ import {
 } from 'typeorm';
 
 import { Comment } from '@api/comments/entities/comment.entity';
+import { Like } from '@api/likes/entities/like.entity';
 import { User } from '@api/users/entities/user.entity';
 import { MAX_LENGTH_VIDEO_TITLE, TYPE_PRIVACY } from '@api/videos/constants';
 
