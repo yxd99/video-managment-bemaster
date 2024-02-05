@@ -99,13 +99,7 @@ export class VideosController {
     @Param('id', ParseIntPipe) id: number,
     @Payload() payload: PayloadDto,
   ): Promise<Video | ServiceResponse> {
-    const videoOrError = await this.videosService.findOne(id);
-
-    if ('error' in videoOrError) {
-      throw videoOrError;
-    }
-
-    const video = videoOrError as Video;
+    const video = await this.videosService.findOne(id);
 
     if (!payload && video.privacy === TYPE_PRIVACY.PRIVATE) {
       throw new ForbiddenException('This video is private');
@@ -144,10 +138,6 @@ export class VideosController {
     @Param('id', ParseIntPipe) id: number,
     @Payload() payload: PayloadDto,
   ): Promise<ServiceResponse> {
-    const response = await this.videosService.remove(id, payload.userId);
-    if ('error' in response) {
-      throw response;
-    }
-    return response;
+    return this.videosService.remove(id, payload.userId);
   }
 }

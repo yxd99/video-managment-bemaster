@@ -107,13 +107,7 @@ export class VideosService {
   async update(id: number, updateVideoDto: UpdateVideoDto): Promise<void> {
     try {
       const { video: videoFile, ...infoVideo } = updateVideoDto;
-      const videoOrError = await this.findOne(id);
-
-      if ('error' in videoOrError) {
-        throw new HttpException(videoOrError.error, HttpStatus.BAD_REQUEST);
-      }
-
-      const video = videoOrError as Video;
+      const video = await this.findOne(id);
 
       if (videoFile) {
         await this.cloudinaryService.removeFile(video.publicId);
@@ -139,7 +133,7 @@ export class VideosService {
     try {
       const videoOrError = await this.findOne(id);
 
-      const video = videoOrError as Video;
+      const video = videoOrError;
 
       if (video.user.id !== userId) {
         throw new HttpException(
@@ -154,10 +148,6 @@ export class VideosService {
         message: 'video has been deleted',
       };
     } catch (error) {
-      if ('error' in error) {
-        this.logger.error(`Error removing video: ${error.error}`);
-        throw error;
-      }
       this.logger.error(`Error removing video: ${error.message}`);
       throw error;
     }

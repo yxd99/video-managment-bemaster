@@ -34,17 +34,10 @@ export class CommentsService {
     try {
       const { userId, videoId, comment } = createCommentDto;
 
-      const userComment = await this.usersService.findById(userId);
-      if ('error' in userComment) {
-        throw userComment;
-      }
-      const user = userComment as User;
+      const user = await this.usersService.findById(userId);
       const videoVerication = await this.videosService.findOne(videoId);
-      if ('error' in videoVerication) {
-        throw videoVerication;
-      }
 
-      const video = videoVerication as Video;
+      const video = videoVerication;
       const newComment = this.commentRepository.create({
         text: comment,
         user,
@@ -63,21 +56,13 @@ export class CommentsService {
   async findByVideo(
     videoId: number,
     isAuthenticated: boolean = false,
-  ): Promise<Comment[] | ServiceResponse> {
-    try {
-      const getVideo = await this.videosService.findOne(videoId);
-      if ('error' in getVideo) {
-        throw getVideo;
-      }
-      const video = getVideo as Video;
-      if (video.privacy === TYPE_PRIVACY.PRIVATE && !isAuthenticated) {
-        throw new ForbiddenException('these comments are from a private video');
-      }
-      return video.comments;
-    } catch (error) {
-      this.logger.error(`Error fetching comments by video: ${error}`);
-      throw error;
+  ): Promise<Comment[]> {
+    const getVideo = await this.videosService.findOne(videoId);
+    const video = getVideo;
+    if (video.privacy === TYPE_PRIVACY.PRIVATE && !isAuthenticated) {
+      throw new ForbiddenException('these comments are from a private video');
     }
+    return video.comments;
   }
 
   async update(

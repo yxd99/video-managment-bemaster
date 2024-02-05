@@ -66,14 +66,7 @@ export class CommentsController {
     @Param('videoId', ParseIntPipe) videoId: number,
     @Payload() payload: PayloadDto,
   ): Promise<Comment[]> {
-    const comments = await this.commentsService.findByVideo(
-      videoId,
-      Boolean(payload),
-    );
-    if ('error' in comments) {
-      throw comments;
-    }
-    return comments as Comment[];
+    return this.commentsService.findByVideo(videoId, Boolean(payload));
   }
 
   @Public()
@@ -83,13 +76,7 @@ export class CommentsController {
     @Param('id', ParseIntPipe) id: number,
     @Payload() payload: PayloadDto,
   ): Promise<Comment> {
-    const comment = await this.commentsService.findOne(id, Boolean(payload));
-
-    if ('error' in comment) {
-      throw comment;
-    }
-
-    return comment as Comment;
+    return this.commentsService.findOne(id, Boolean(payload));
   }
 
   @Patch(':id')
@@ -100,15 +87,7 @@ export class CommentsController {
     @Body() updateCommentDto: UpdateCommentDto,
     @Payload() payload: PayloadDto,
   ): Promise<ServiceResponse> {
-    const response = await this.commentsService.update(
-      +id,
-      updateCommentDto,
-      payload,
-    );
-    if ('error' in response) {
-      throw response;
-    }
-    return response;
+    return this.commentsService.update(+id, updateCommentDto, payload);
   }
 
   @Delete(':id')

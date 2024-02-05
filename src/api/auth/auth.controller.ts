@@ -51,7 +51,7 @@ export class AuthController {
   async login(@Body() body: LoginDto): Promise<AuthType> {
     const response = await this.authService.login(body);
 
-    const { token } = response as AuthType;
+    const { token } = response;
     return { token };
   }
 }
