@@ -1,4 +1,8 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { CreateUserDto } from '@api/users/dto/create-user.dto';
@@ -20,82 +24,48 @@ export class AuthService {
   async register(
     createUserDto: CreateUserDto,
   ): Promise<Auth | ServiceResponse> {
-    try {
-      const existingUser = await this.usersService.findByEmail(
-        createUserDto.email,
+    const existingUser = await this.usersService.findByEmail(
+      createUserDto.email,
+    );
+
+    if (existingUser) {
+      throw new ConflictException(
+        `Email ${createUserDto.email} already exists.`,
       );
-
-      if (!('error' in existingUser)) {
-        return {
-          error: `Email ${createUserDto.email} already exists.`,
-          statusCode: HttpStatus.CONFLICT,
-        };
-      }
-
-      await this.usersService.create(createUserDto);
-
-      const login = await this.login({
-        email: createUserDto.email,
-        password: createUserDto.password,
-      });
-      if ('error' in login) {
-        throw login;
-      }
-      return login as Auth;
-    } catch (error) {
-      return {
-        error: 'Unable to register user at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
     }
+
+    await this.usersService.create(createUserDto);
+
+    return this.login({
+      email: createUserDto.email,
+      password: createUserDto.password,
+    });
   }
 
-  async login(loginDto: LoginDto): Promise<Auth | ServiceResponse> {
-    try {
-      const findUser = await this.usersService.findByEmail(loginDto.email);
+  async login(loginDto: LoginDto): Promise<Auth> {
+    const user = await this.usersService.findByEmail(loginDto.email);
 
-      if ('error' in findUser) {
-        return {
-          error: 'Unregistered user.',
-          statusCode: HttpStatus.UNAUTHORIZED,
-        };
-      }
-      const user = findUser as User;
+    const validatePassword = await this.validateUser(
+      loginDto.email,
+      loginDto.password,
+    );
 
-      const validatePassword = await this.validateUser(
-        loginDto.email,
-        loginDto.password,
-      );
-
-      if (!validatePassword) {
-        return {
-          error: 'Incorrect password.',
-          statusCode: HttpStatus.UNAUTHORIZED,
-        };
-      }
-
-      const payload: PayloadDto = {
-        userId: user.id,
-        email: user.email,
-      };
-      const token = await this.jwtService.signAsync(payload);
-
-      return { token };
-    } catch (error) {
-      return {
-        error: 'Unable to perform login at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+    if (!validatePassword) {
+      throw new UnauthorizedException('Incorrect password.');
     }
+
+    const payload: PayloadDto = {
+      userId: user.id,
+      email: user.email,
+    };
+    const token = await this.jwtService.signAsync(payload);
+
+    return { token };
   }
 
   async validateUser(email: string, password: string): Promise<User | null> {
-    const getUser = await this.usersService.getUserWithPassword(email);
-    if ('error' in getUser) {
-      return null;
-    }
-    const user = getUser as User;
+    const user = await this.usersService.getUserWithPassword(email);
 
-    return (await user?.checkPassword(password)) ? user : null;
+    return user && (await user.checkPassword(password)) ? user : null;
   }
 }

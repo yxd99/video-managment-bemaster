@@ -1,4 +1,4 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 
@@ -29,10 +29,7 @@ export class UsersService {
       };
     } catch (error) {
       this.logger.error(`Error creating user: ${error}`);
-      return {
-        error: 'Unable to register user at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      throw error;
     }
   }
 
@@ -58,10 +55,9 @@ export class UsersService {
         const user = userOrError as User;
 
         if (user.id !== id) {
-          return {
-            error: `Email ${updateUserDto.email} already exists.`,
-            statusCode: HttpStatus.CONFLICT,
-          };
+          throw new ConflictException(
+            `Email ${updateUserDto.email} already exists.`,
+          );
         }
       }
 
@@ -75,33 +71,21 @@ export class UsersService {
       };
     } catch (error) {
       this.logger.error(`Error updating user: ${error}`);
-      return {
-        error: 'Unable to update user at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      throw error;
     }
   }
 
-  async findByEmail(email: string): Promise<ServiceResponse | User> {
+  async findByEmail(email: string): Promise<User> {
     try {
-      return await this.userRepository.findOneByOrFail({ email });
+      return this.userRepository.findOneBy({ email });
     } catch (error) {
-      return {
-        error: `User with email ${email} not found.`,
-        statusCode: HttpStatus.NOT_FOUND,
-      };
+      this.logger.error(`Error finding user by email: ${error}`);
+      throw error;
     }
   }
 
-  async findById(id: number): Promise<ServiceResponse | User> {
-    try {
-      return await this.userRepository.findOneByOrFail({ id });
-    } catch (error) {
-      return {
-        error: `User with id ${id} not found.`,
-        statusCode: HttpStatus.NOT_FOUND,
-      };
-    }
+  async findById(id: number): Promise<User> {
+    return this.userRepository.findOneByOrFail({ id });
   }
 
   async remove(id: number): Promise<ServiceResponse> {
@@ -119,16 +103,11 @@ export class UsersService {
       };
     } catch (error) {
       this.logger.error(`Error removing user: ${error}`);
-      return {
-        error: 'Unable to remove user at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      throw error;
     }
   }
 
-  async getUserWithPassword(
-    email: string,
-  ): Promise<Nullable<User> | ServiceResponse> {
+  async getUserWithPassword(email: string): Promise<Nullable<User>> {
     try {
       return this.userRepository
         .createQueryBuilder('users')
@@ -137,10 +116,7 @@ export class UsersService {
         .getOne();
     } catch (error) {
       this.logger.error(`Error get user with password: ${error}`);
-      return {
-        error: 'Service login unavaible',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      throw error;
     }
   }
 }

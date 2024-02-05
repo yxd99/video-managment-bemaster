@@ -28,17 +28,21 @@ export class AuthController {
   @ApiConflictResponse(authSchemas.register.conflictSchema)
   @ApiBody({ type: CreateUserDto })
   async register(@Body() body: CreateUserDto): Promise<Auth> {
-    const response = await this.authService.register(body);
-    if ('error' in response) {
-      throw response;
-    }
-
+    await this.authService.register(body);
     return this.login({
       email: body.email,
       password: body.validatePassword,
     });
   }
 
+  /**
+   * Handles the user login process.
+   * Calls the `login` method of the `AuthService` to validate the user's credentials and generate a token.
+   * Returns the generated token.
+   *
+   * @param body - The login credentials.
+   * @returns The generated token.
+   */
   @Post('login')
   @ApiUnauthorizedResponse(authSchemas.login.unauhtorizedSchema)
   @ApiOkResponse(authSchemas.login.okSchema)
@@ -46,9 +50,6 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   async login(@Body() body: LoginDto): Promise<Auth> {
     const response = await this.authService.login(body);
-    if ('error' in response) {
-      throw response;
-    }
 
     const { token } = response as Auth;
     return { token };

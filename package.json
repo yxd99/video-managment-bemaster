@@ -81,11 +81,11 @@
     ],
     "rootDir": "./",
     "moduleNameMapper": {
+      "^@decorators/(.*)$": "<rootDir>/src/shared/decorators/$1",
+      "^@schemas/(.*)": "<rootDir>/src/common/schemas/$1",
       "^@api/(.*)$": "<rootDir>/src/api/$1",
       "^@shared/(.*)$": "<rootDir>/src/shared/$1",
-      "^@common/(.*)$": "<rootDir>/src/commons/$1",
-      "^@decorators/(.*)$": "<rootDir>/src/decorators/$1",
-      "^@schemas/(.*)": "<rootDir>/src/common/schemas/*",
+      "^@common/(.*)$": "<rootDir>/src/common/$1",
       "^@root/(.*)$": "<rootDir>/src/$1"
     },
     "testRegex": ".*\\.spec\\.ts$",

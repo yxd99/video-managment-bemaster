@@ -1,8 +1,8 @@
 import {
   Injectable,
   Logger,
-  HttpStatus,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -55,16 +55,8 @@ export class CommentsService {
 
       return { message: 'comment publish successful' };
     } catch (error) {
-      if ('error' in error) {
-        this.logger.error(`Error creating comment: ${error.error}`);
-        throw error;
-      }
-      this.logger.error(`Error creating comment: ${error.message}`);
-      return {
-        message:
-          'Unable to create comment at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      this.logger.error(`Error creating comment: ${error}`);
+      throw error;
     }
   }
 
@@ -79,23 +71,12 @@ export class CommentsService {
       }
       const video = getVideo as Video;
       if (video.privacy === TYPE_PRIVACY.PRIVATE && !isAuthenticated) {
-        return {
-          error: 'these comments are from a private video',
-          statusCode: HttpStatus.FORBIDDEN,
-        };
+        throw new ForbiddenException('these comments are from a private video');
       }
       return video.comments;
     } catch (error) {
-      if ('error' in error) {
-        this.logger.error(`Error fetching comments by video: ${error.error}`);
-        throw error;
-      }
-      this.logger.error(`Error fetching comments by video: ${error.message}`);
-      return {
-        error:
-          'Unable to fetch comments at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      this.logger.error(`Error fetching comments by video: ${error}`);
+      throw error;
     }
   }
 
@@ -107,16 +88,11 @@ export class CommentsService {
     try {
       const comment = await this.findOne(id, Boolean(payload));
 
-      if ('error' in comment) {
-        return {
-          error: `Comment not found`,
-          statusCode: HttpStatus.NOT_FOUND,
-        };
+      if (comment === null) {
+        throw new NotFoundException('Comment not found');
       }
 
-      if (comment instanceof Comment) {
-        this.ensureOwnershipOfComment(comment, payload.userId);
-      }
+      this.ensureOwnershipOfComment(comment, payload.userId);
 
       await this.commentRepository.update(id, {
         text: updateCommentDto.comment,
@@ -133,13 +109,6 @@ export class CommentsService {
     try {
       const comment = await this.findOne(id, Boolean(payload));
 
-      if (!comment) {
-        return {
-          error: `Comment ${id} not found`,
-          statusCode: HttpStatus.NOT_FOUND,
-        };
-      }
-
       if (comment instanceof Comment) {
         this.ensureOwnershipOfComment(comment, payload.userId);
       }
@@ -148,7 +117,7 @@ export class CommentsService {
 
       return { message: 'comment removed successful' };
     } catch (error) {
-      this.logger.error(`Error removing comment: ${error.message}`);
+      this.logger.error(`Error removing comment: ${error}`);
       throw error;
     }
   }
@@ -156,35 +125,25 @@ export class CommentsService {
   async findOne(
     commentId: number,
     isAuthenticated: boolean = false,
-  ): Promise<Comment | ServiceResponse> {
+  ): Promise<Comment> {
     try {
-      const comment = await this.commentRepository.findOne({
+      const comment = await this.commentRepository.findOneOrFail({
         relations: ['user', 'video'],
         where: { id: commentId },
       });
 
       if (!comment || comment.video === null) {
-        return {
-          error: `Comment not found`,
-          statusCode: HttpStatus.NOT_FOUND,
-        };
+        throw new NotFoundException(`Comment not found`);
       }
 
       if (comment.video.privacy === TYPE_PRIVACY.PRIVATE && !isAuthenticated) {
-        return {
-          error: 'This comment belongs to a private video',
-          statusCode: HttpStatus.FORBIDDEN,
-        };
+        throw new ForbiddenException('This comment belongs to a private video');
       }
 
       return comment;
     } catch (error) {
-      this.logger.error(`Error fetching comment: ${error.message}`);
-      return {
-        message:
-          'Unable to fetch comment at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      this.logger.error(`Error fetching comment: ${error}`);
+      throw error;
     }
   }
 

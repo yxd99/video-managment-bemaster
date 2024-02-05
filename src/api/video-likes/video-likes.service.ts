@@ -2,9 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { User } from '@api/users/entities/user.entity';
 import { UsersService } from '@api/users/users.service';
-import { Video } from '@api/videos/entities/video.entity';
 import { VideosService } from '@api/videos/videos.service';
 import { Nullable, ServiceResponse } from '@shared/types';
 
@@ -22,15 +20,20 @@ export class VideoLikesService {
     private readonly usersService: UsersService,
   ) {}
 
+  /**
+   * Creates a new video like by associating a user and a video.
+   * @param like - The video like data.
+   * @returns The created video like.
+   */
   async create(like: VideoLikeDto): Promise<VideoLike> {
     try {
-      const newLike = await this.videoLikeRepository.create();
-      newLike.user = (await this.usersService.findById(like.userId)) as User;
-      const videOrError = await this.videosService.findOne(like.videoId);
-      if ('error' in videOrError) {
-        throw videOrError;
+      const newLike = this.videoLikeRepository.create();
+      newLike.user = await this.usersService.findById(like.userId);
+      const video = await this.videosService.findOne(like.videoId);
+      if (!video) {
+        throw new Error('Video not found');
       }
-      newLike.video = videOrError as Video;
+      newLike.video = video;
       return this.videoLikeRepository.save(newLike);
     } catch (error) {
       this.logger.error(`Error creating like: ${error}`);
@@ -38,11 +41,24 @@ export class VideoLikesService {
     }
   }
 
+  /**
+   * Toggles the like status of a video like (changes it from like to dislike or vice versa).
+   * @param videoLike - The video like to toggle.
+   * @returns The updated video like.
+   */
   async setLike(videoLike: VideoLike): Promise<VideoLike> {
-    const likeTransform = { ...videoLike, isLike: !videoLike.isLike };
-    return this.videoLikeRepository.save(likeTransform);
+    return this.videoLikeRepository.save({
+      ...videoLike,
+      isLike: !videoLike.isLike,
+    });
   }
 
+  /**
+   * Retrieves the like ID for a specific user and video.
+   * @param userId - The ID of the user.
+   * @param videoId - The ID of the video.
+   * @returns The like object if found, or null if not found.
+   */
   async getLikeId(
     userId: number,
     videoId: number,
@@ -57,17 +73,24 @@ export class VideoLikesService {
     }
   }
 
+  /**
+   * Toggles the like status for a specific user and video.
+   * If the like exists, it is toggled. If it doesn't exist, a new like is created.
+   * @param likeDto - The video like data.
+   * @returns A success message.
+   */
   async toggleLike(likeDto: VideoLikeDto): Promise<ServiceResponse> {
     try {
       const like = await this.getLikeId(likeDto.userId, likeDto.videoId);
-      const statusLike =
-        like !== null ? await this.setLike(like) : await this.create(likeDto);
+      const statusLike = like
+        ? await this.setLike(like)
+        : await this.create(likeDto);
 
       return {
-        message: `${statusLike.isLike ? 'like sended successful' : 'like removed'}`,
+        message: `${statusLike.isLike ? 'like sent successfully' : 'like removed'}`,
       };
     } catch (error) {
-      this.logger.error(`Error like: ${error}`);
+      this.logger.error(`Error toggling like: ${error}`);
       throw error;
     }
   }

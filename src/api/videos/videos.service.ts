@@ -1,4 +1,4 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, HttpStatus, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -20,34 +20,38 @@ export class VideosService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(createVideoDto: CreateVideoDto): Promise<ServiceResponse> {
+  /**
+   * Creates a new video by uploading the video file to the cloud storage and saving the video details in the database.
+   * @param createVideoDto The data for creating a new video.
+   * @returns The created video.
+   */
+  async create(createVideoDto: CreateVideoDto): Promise<Video> {
     try {
       const { video, ...data } = createVideoDto;
       const { secure_url: url, public_id: publicId } =
         await this.cloudinaryService.uploadFile(video);
 
-      const videoCreate = await this.videoRepository.save({
+      return await this.videoRepository.save({
         ...data,
         url,
         publicId,
       });
-
-      return {
-        message: `Video ${videoCreate.title} has been created successfully`,
-      };
     } catch (error) {
       this.logger.error(`Error creating video: ${error.message}`);
-      return {
-        message: 'Error creating video',
-        statusCode: HttpStatus.BAD_REQUEST,
-      };
+      throw new HttpException('Error creating video', HttpStatus.BAD_REQUEST);
     }
   }
 
+  /**
+   * Retrieves all videos, optionally filtered by a search query and authenticated status.
+   * @param isAuthenticated Indicates if the user is authenticated.
+   * @param query The search query.
+   * @returns The list of videos.
+   */
   async findAll(
     isAuthenticated: boolean,
     query: string = '',
-  ): Promise<Video[] | ServiceResponse> {
+  ): Promise<Video[]> {
     try {
       const queryBuilder = `(videos.title LIKE :query OR videos.description LIKE :query OR videos.credits LIKE :query) ${isAuthenticated ? '' : 'AND privacy = :privacy'}`;
 
@@ -61,58 +65,50 @@ export class VideosService {
         })
         .getMany();
 
-      if (!videos || (Array.isArray(videos) && videos.length === 0)) {
+      if (!videos || videos.length === 0) {
         return [];
       }
 
       return videos;
     } catch (error) {
       this.logger.error(`Error fetching videos: ${error.message}`);
-      return {
-        error: 'Error fetching videos',
-        statusCode: HttpStatus.BAD_REQUEST,
-      };
+      throw new HttpException('Error fetching videos', HttpStatus.BAD_REQUEST);
     }
   }
 
-  async findOne(id: number): Promise<Video | ServiceResponse> {
+  /**
+   * Retrieves a specific video by its ID, including the associated user and comments.
+   * @param id The ID of the video.
+   * @returns The video or a service response indicating an error.
+   */
+  async findOne(id: number): Promise<Video> {
     try {
-      const video = await this.videoRepository.findOne({
+      return await this.videoRepository.findOne({
         relations: ['user', 'comments', 'comments.user'],
         where: { id },
       });
-
-      if (!video) {
-        return {
-          error: 'Video not found',
-          statusCode: HttpStatus.NOT_FOUND,
-        };
-      }
-
-      return video;
     } catch (error) {
       if ('error' in error) {
         this.logger.error(`Error fetching video: ${error}`);
         throw error;
       }
       this.logger.error(`Error fetching video: ${error.message}`);
-      return {
-        error: 'Error fetching video',
-        statusCode: HttpStatus.BAD_REQUEST,
-      };
+      throw new HttpException('Error fetching video', HttpStatus.BAD_REQUEST);
     }
   }
 
-  async update(
-    id: number,
-    updateVideoDto: UpdateVideoDto,
-  ): Promise<ServiceResponse> {
+  /**
+   * Updates a video by uploading a new video file and updating the video details.
+   * @param id The ID of the video to update.
+   * @param updateVideoDto The data for updating the video.
+   */
+  async update(id: number, updateVideoDto: UpdateVideoDto): Promise<void> {
     try {
       const { video: videoFile, ...infoVideo } = updateVideoDto;
       const videoOrError = await this.findOne(id);
 
       if ('error' in videoOrError) {
-        throw videoOrError;
+        throw new HttpException(videoOrError.error, HttpStatus.BAD_REQUEST);
       }
 
       const video = videoOrError as Video;
@@ -126,47 +122,42 @@ export class VideosService {
       }
 
       await this.videoRepository.save({ ...video, ...infoVideo });
-
-      return { message: 'Video has been updated' };
     } catch (error) {
       this.logger.error(`Error updating video: ${error.message}`);
-      return {
-        error: 'Error updating video',
-        statusCode: HttpStatus.BAD_REQUEST,
-      };
+      throw new HttpException('Error updating video', HttpStatus.BAD_REQUEST);
     }
   }
 
+  /**
+   * Removes a video by deleting the video file from the cloud storage and marking the video as removed in the database.
+   * @param id The ID of the video to remove.
+   * @param userId The ID of the user removing the video.
+   */
   async remove(id: number, userId: number): Promise<ServiceResponse> {
     try {
       const videoOrError = await this.findOne(id);
 
-      if ('error' in videoOrError) {
-        throw videoOrError;
-      }
-
       const video = videoOrError as Video;
 
       if (video.user.id !== userId) {
-        return {
-          error: 'you are not owner of this video',
-          statusCode: HttpStatus.FORBIDDEN,
-        };
+        throw new HttpException(
+          'You are not the owner of this video',
+          HttpStatus.FORBIDDEN,
+        );
       }
 
       await this.cloudinaryService.removeFile(video.publicId);
       await this.videoRepository.softRemove(video);
-      return { message: `Video has been removed successfully` };
+      return {
+        message: 'video has been deleted',
+      };
     } catch (error) {
       if ('error' in error) {
         this.logger.error(`Error removing video: ${error.error}`);
-        return error;
+        throw error;
       }
       this.logger.error(`Error removing video: ${error.message}`);
-      return {
-        error: 'Error removing video',
-        statusCode: HttpStatus.BAD_REQUEST,
-      };
+      throw new HttpException('Error removing video', HttpStatus.BAD_REQUEST);
     }
   }
 }

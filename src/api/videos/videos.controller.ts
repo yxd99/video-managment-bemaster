@@ -74,7 +74,10 @@ export class VideosController {
     @Payload() payload: PayloadDto,
   ): Promise<ServiceResponse> {
     const createVideo = { ...createVideoDto, video, user: payload.userId };
-    return this.videosService.create(createVideo);
+    const videoCreated = await this.videosService.create(createVideo);
+    return {
+      message: `video has been created, url: ${videoCreated.url}`,
+    };
   }
 
   @Public()
@@ -131,7 +134,10 @@ export class VideosController {
     video: Express.Multer.File,
   ): Promise<ServiceResponse> {
     const updateVideo = { ...updateVideoDto, video };
-    return this.videosService.update(id, updateVideo);
+    await this.videosService.update(id, updateVideo);
+    return {
+      message: 'video has been updated',
+    };
   }
 
   @Delete(':id')
