@@ -9,11 +9,14 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
+import { AuthService } from '@api/auth/auth.service';
+import { PayloadDto } from '@api/auth/dto/payload.dto';
 import { publicData } from '@common/constants';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
+    private readonly authService: AuthService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly reflector: Reflector,
@@ -35,16 +38,16 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException('');
     }
-    try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-      });
+    const payload: PayloadDto = await this.jwtService.verifyAsync(token, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+    });
 
-      request.user = payload;
-    } catch (error) {
-      throw new UnauthorizedException({ error });
+    const authId = await this.authService.findAuth(payload.tokenId);
+    if (authId === null) {
+      throw new UnauthorizedException('token invalid');
     }
 
+    request.user = payload;
     return true;
   }
 

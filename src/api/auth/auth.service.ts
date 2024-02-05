@@ -4,26 +4,31 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 import { CreateUserDto } from '@api/users/dto/create-user.dto';
 import { User } from '@api/users/entities/user.entity';
 import { UsersService } from '@api/users/users.service';
 import { ServiceResponse } from '@shared/types';
 
-import { Auth } from './auth.type';
+import { Auth } from './auth.entity';
+import { AuthType } from './auth.type';
 import { LoginDto } from './dto/login.dto';
 import { PayloadDto } from './dto/payload.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectRepository(Auth)
+    private readonly authRepository: Repository<Auth>,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
   ) {}
 
   async register(
     createUserDto: CreateUserDto,
-  ): Promise<Auth | ServiceResponse> {
+  ): Promise<AuthType | ServiceResponse> {
     const existingUser = await this.usersService.findByEmail(
       createUserDto.email,
     );
@@ -42,7 +47,7 @@ export class AuthService {
     });
   }
 
-  async login(loginDto: LoginDto): Promise<Auth> {
+  async login(loginDto: LoginDto): Promise<AuthType> {
     const user = await this.usersService.findByEmail(loginDto.email);
 
     const validatePassword = await this.validateUser(
@@ -53,10 +58,16 @@ export class AuthService {
     if (!validatePassword) {
       throw new UnauthorizedException('Incorrect password.');
     }
+    const lastAuth = await this.authRepository.findOneBy({ userId: user });
+    if (lastAuth !== null) {
+      await this.authRepository.softDelete(lastAuth.id);
+    }
+    const auth = await this.authRepository.save({ userId: user });
 
     const payload: PayloadDto = {
-      userId: user.id,
       email: user.email,
+      tokenId: auth.id,
+      userId: user.id,
     };
     const token = await this.jwtService.signAsync(payload);
 
@@ -67,5 +78,9 @@ export class AuthService {
     const user = await this.usersService.getUserWithPassword(email);
 
     return user && (await user.checkPassword(password)) ? user : null;
+  }
+
+  async findAuth(id: number): Promise<Auth> {
+    return this.authRepository.findOneBy({ id });
   }
 }

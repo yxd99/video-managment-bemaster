@@ -10,7 +10,7 @@ import {
 } from '@nestjs/swagger';
 
 import { AuthService } from '@api/auth/auth.service';
-import { Auth } from '@api/auth/auth.type';
+import { AuthType } from '@api/auth/auth.type';
 import { LoginDto } from '@api/auth/dto/login.dto';
 import { CreateUserDto } from '@api/users/dto/create-user.dto';
 import { Public } from '@common/guards/public.guard';
@@ -27,7 +27,7 @@ export class AuthController {
   @ApiBadRequestResponse(authSchema.register.badRequestSchema)
   @ApiConflictResponse(authSchema.register.conflictSchema)
   @ApiBody({ type: CreateUserDto })
-  async register(@Body() body: CreateUserDto): Promise<Auth> {
+  async register(@Body() body: CreateUserDto): Promise<AuthType> {
     await this.authService.register(body);
     return this.login({
       email: body.email,
@@ -48,10 +48,10 @@ export class AuthController {
   @ApiOkResponse(authSchema.login.okSchema)
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: LoginDto })
-  async login(@Body() body: LoginDto): Promise<Auth> {
+  async login(@Body() body: LoginDto): Promise<AuthType> {
     const response = await this.authService.login(body);
 
-    const { token } = response as Auth;
+    const { token } = response as AuthType;
     return { token };
   }
 }

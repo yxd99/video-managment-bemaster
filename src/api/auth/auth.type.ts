@@ -1,1 +1,1 @@
-export type Auth = { token };
+export type AuthType = { token };

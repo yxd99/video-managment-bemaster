@@ -1,4 +1,9 @@
-import { Injectable, Logger, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 
@@ -31,7 +36,7 @@ export class UsersService {
       };
     } catch (error) {
       this.logger.error(`Error creating user: ${error}`);
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
