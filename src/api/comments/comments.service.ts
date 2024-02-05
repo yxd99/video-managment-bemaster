@@ -1,9 +1,16 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  HttpStatus,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { PayloadDto } from '@api/auth/dto/payload.dto';
 import { User } from '@api/users/entities/user.entity';
 import { UsersService } from '@api/users/users.service';
+import { TYPE_PRIVACY } from '@api/videos/constants';
 import { Video } from '@api/videos/entities/video.entity';
 import { VideosService } from '@api/videos/videos.service';
 import { ServiceResponse } from '@shared/types';
@@ -32,7 +39,6 @@ export class CommentsService {
         throw userComment;
       }
       const user = userComment as User;
-      console.log({ userId });
       const videoVerication = await this.videosService.findOne(videoId);
       if ('error' in videoVerication) {
         throw videoVerication;
@@ -50,7 +56,7 @@ export class CommentsService {
       return { message: 'comment publish successful' };
     } catch (error) {
       if ('error' in error) {
-        this.logger.error(`Error creating comment: ${error}`);
+        this.logger.error(`Error creating comment: ${error.error}`);
         throw error;
       }
       this.logger.error(`Error creating comment: ${error.message}`);
@@ -62,13 +68,22 @@ export class CommentsService {
     }
   }
 
-  async findByVideo(videoId: number): Promise<Comment[] | ServiceResponse> {
+  async findByVideo(
+    videoId: number,
+    isAuthenticated: boolean = false,
+  ): Promise<Comment[] | ServiceResponse> {
     try {
       const getVideo = await this.videosService.findOne(videoId);
       if ('error' in getVideo) {
         throw getVideo;
       }
       const video = getVideo as Video;
+      if (video.privacy === TYPE_PRIVACY.PRIVATE && !isAuthenticated) {
+        return {
+          error: 'these comments are from a private video',
+          statusCode: HttpStatus.FORBIDDEN,
+        };
+      }
       return video.comments;
     } catch (error) {
       if ('error' in error) {
@@ -87,15 +102,20 @@ export class CommentsService {
   async update(
     id: number,
     updateCommentDto: UpdateCommentDto,
+    payload: PayloadDto,
   ): Promise<ServiceResponse> {
     try {
-      const existingComment = await this.commentRepository.findOneBy({ id });
+      const comment = await this.findOne(id, Boolean(payload));
 
-      if (!existingComment) {
+      if ('error' in comment) {
         return {
-          error: `Comment ${id} not found`,
+          error: `Comment not found`,
           statusCode: HttpStatus.NOT_FOUND,
         };
+      }
+
+      if (comment instanceof Comment) {
+        this.ensureOwnershipOfComment(comment, payload.userId);
       }
 
       await this.commentRepository.update(id, {
@@ -104,24 +124,24 @@ export class CommentsService {
 
       return { message: 'comment edited successful' };
     } catch (error) {
-      this.logger.error(`Error updating comment: ${error.message}`);
-      return {
-        message:
-          'Unable to update comment at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      this.logger.error(`Error updating comment: ${error}`);
+      throw error;
     }
   }
 
-  async remove(id: number): Promise<ServiceResponse> {
+  async remove(id: number, payload: PayloadDto): Promise<ServiceResponse> {
     try {
-      const existingComment = await this.commentRepository.findOneBy({ id });
+      const comment = await this.findOne(id, Boolean(payload));
 
-      if (!existingComment) {
+      if (!comment) {
         return {
           error: `Comment ${id} not found`,
           statusCode: HttpStatus.NOT_FOUND,
         };
+      }
+
+      if (comment instanceof Comment) {
+        this.ensureOwnershipOfComment(comment, payload.userId);
       }
 
       await this.commentRepository.softDelete(id);
@@ -129,25 +149,31 @@ export class CommentsService {
       return { message: 'comment removed successful' };
     } catch (error) {
       this.logger.error(`Error removing comment: ${error.message}`);
-      return {
-        message:
-          'Unable to remove comment at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      throw error;
     }
   }
 
-  async findOne(commentId: number): Promise<Comment | ServiceResponse> {
+  async findOne(
+    commentId: number,
+    isAuthenticated: boolean = false,
+  ): Promise<Comment | ServiceResponse> {
     try {
       const comment = await this.commentRepository.findOne({
         relations: ['user', 'video'],
         where: { id: commentId },
       });
 
-      if (!comment) {
+      if (!comment || comment.video === null) {
         return {
-          error: `Comment ${commentId} not found`,
+          error: `Comment not found`,
           statusCode: HttpStatus.NOT_FOUND,
+        };
+      }
+
+      if (comment.video.privacy === TYPE_PRIVACY.PRIVATE && !isAuthenticated) {
+        return {
+          error: 'This comment belongs to a private video',
+          statusCode: HttpStatus.FORBIDDEN,
         };
       }
 
@@ -159,6 +185,12 @@ export class CommentsService {
           'Unable to fetch comment at the moment. Please try again later.',
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
+    }
+  }
+
+  ensureOwnershipOfComment(comment: Comment, userId: number) {
+    if (comment.user.id !== userId) {
+      throw new ForbiddenException('You are not the owner of this comment');
     }
   }
 }

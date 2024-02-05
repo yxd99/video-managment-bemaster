@@ -1,9 +1,5 @@
-import { IsString, MaxLength } from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
 
-import { MAX_LENGTH_COMMENT } from '@api/comments/constants';
+import { CreateCommentDto } from './create-comment.dto';
 
-export class UpdateCommentDto {
-  @IsString()
-  @MaxLength(MAX_LENGTH_COMMENT)
-  comment: string;
-}
+export class UpdateCommentDto extends PartialType(CreateCommentDto) {}

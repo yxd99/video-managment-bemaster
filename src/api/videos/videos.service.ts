@@ -78,7 +78,7 @@ export class VideosService {
   async findOne(id: number): Promise<Video | ServiceResponse> {
     try {
       const video = await this.videoRepository.findOne({
-        relations: ['user', 'comments'],
+        relations: ['user', 'comments', 'comments.user'],
         where: { id },
       });
 

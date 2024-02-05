@@ -9,7 +9,7 @@ export const PREFIX = 'api';
 export const PORT = process.env.PORT ?? 3000;
 export const SERVERS = [
   {
-    host: `localhost:${PORT}`,
+    host: `http://localhost:${PORT}/api`,
     description: 'Dev',
   },
 ];
