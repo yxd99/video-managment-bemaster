@@ -5,6 +5,7 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  Get,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -15,6 +16,7 @@ import {
 } from '@nestjs/swagger';
 
 import { PayloadDto } from '@api/auth/dto/payload.dto';
+import { Public } from '@common/guards/public.guard';
 import { Payload } from '@decorators/payload.decorator';
 import { likeSchema } from '@schemas/index';
 import { ServiceResponse } from '@shared/types';
@@ -40,5 +42,11 @@ export class LikesController {
       videoId,
       userId: payload.userId,
     });
+  }
+
+  @Public()
+  @Get('video/most-popular')
+  async getMostPopular(@Payload() payload: PayloadDto) {
+    return this.likesService.getVideosMostPopular(Boolean(payload));
   }
 }

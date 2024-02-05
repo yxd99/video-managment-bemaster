@@ -32,7 +32,7 @@ import { ServiceResponse } from '@shared/types';
 
 import { MAX_SIZE_VIDEO, TYPE_PRIVACY } from './constants';
 import { CreateVideoDto } from './dto/create-video.dto';
-import { QueryFindDto } from './dto/query-find.dto';
+import { QueryParamsDto } from './dto/query-params.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { Video } from './entities/video.entity';
 import { VideosService } from './videos.service';
@@ -84,15 +84,13 @@ export class VideosController {
   @Get()
   async findAll(
     @Payload() payload: PayloadDto,
-    @Query('search') search: QueryFindDto,
+    @Query() query: QueryParamsDto,
   ): Promise<Video[] | ServiceResponse> {
     const isLogged = Boolean(payload);
-    const videos = await this.videosService.findAll(isLogged, search.search);
-
-    if ('error' in videos) {
-      throw videos;
+    if (!isLogged && query.privacy === TYPE_PRIVACY.PRIVATE) {
+      throw new ForbiddenException('You must log in first');
     }
-    return videos;
+    return this.videosService.findAll(isLogged, query);
   }
 
   @Public()

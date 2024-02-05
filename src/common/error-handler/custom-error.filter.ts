@@ -24,21 +24,25 @@ export class CustomErrorFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const details =
-      typeof exception?.response.message === 'string'
-        ? exception.response.message
-        : [...exception.response.message];
-
     const customException: CustomException = {
       path: request.url,
       timestamp: new Date().toISOString(),
       status:
-        exception?.response.statusCode ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        exception.response?.statusCode ?? HttpStatus.INTERNAL_SERVER_ERROR,
       message: {
-        error: exception.response.error,
-        details,
+        error: exception.response?.error ?? exception.message,
       },
     };
+
+    if (exception.name !== null) {
+      customException.message.details = exception.message;
+      customException.message.error = exception.name;
+    } else {
+      customException.message.details =
+        typeof exception.response?.message === 'string'
+          ? exception.response?.message
+          : [...exception.response.message];
+    }
 
     response.status(customException.status).json(customException);
   }

@@ -1,4 +1,10 @@
-import { Injectable, Logger, HttpStatus, HttpException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  HttpStatus,
+  HttpException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -7,6 +13,7 @@ import { ServiceResponse } from '@shared/types';
 
 import { TYPE_PRIVACY } from './constants';
 import { CreateVideoDto } from './dto/create-video.dto';
+import { QueryParamsDto } from './dto/query-params.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { Video } from './entities/video.entity';
 
@@ -50,30 +57,30 @@ export class VideosService {
    */
   async findAll(
     isAuthenticated: boolean,
-    query: string = '',
+    query?: QueryParamsDto,
   ): Promise<Video[]> {
-    try {
-      const queryBuilder = `(videos.title LIKE :query OR videos.description LIKE :query OR videos.credits LIKE :query) ${isAuthenticated ? '' : 'AND privacy = :privacy'}`;
+    let privacyQuery = '';
+    const privacy = query?.privacy ?? TYPE_PRIVACY.PUBLIC;
+    const search = query?.search ?? '';
 
-      const videos = await this.videoRepository
-        .createQueryBuilder('videos')
-        .innerJoinAndSelect('videos.user', 'users')
-        .leftJoinAndSelect('videos.comments', 'video')
-        .where(queryBuilder, {
-          query: `%${query}%`,
-          privacy: TYPE_PRIVACY.PUBLIC,
-        })
-        .getMany();
-
-      if (!videos || videos.length === 0) {
-        return [];
-      }
-
-      return videos;
-    } catch (error) {
-      this.logger.error(`Error fetching videos: ${error.message}`);
-      throw new HttpException('Error fetching videos', HttpStatus.BAD_REQUEST);
+    if (query?.privacy) {
+      privacyQuery = 'AND privacy = :privacy';
     }
+    const queryBuilder = `(videos.title LIKE :query 
+                            OR videos.description LIKE :query 
+                            OR videos.credits LIKE :query) 
+                            ${privacyQuery}`;
+
+    return this.videoRepository
+      .createQueryBuilder('videos')
+      .innerJoinAndSelect('videos.user', 'users')
+      .leftJoinAndSelect('videos.comments', 'video')
+      .leftJoin('videos.likes', 'likes')
+      .where(queryBuilder, {
+        query: `%${search}%`,
+        privacy,
+      })
+      .getMany();
   }
 
   /**
@@ -82,19 +89,14 @@ export class VideosService {
    * @returns The video or a service response indicating an error.
    */
   async findOne(id: number): Promise<Video> {
-    try {
-      return await this.videoRepository.findOne({
-        relations: ['user', 'comments', 'comments.user'],
-        where: { id },
-      });
-    } catch (error) {
-      if ('error' in error) {
-        this.logger.error(`Error fetching video: ${error}`);
-        throw error;
-      }
-      this.logger.error(`Error fetching video: ${error.message}`);
-      throw new HttpException('Error fetching video', HttpStatus.BAD_REQUEST);
+    const video = await this.videoRepository.findOne({
+      relations: ['user', 'comments', 'comments.user'],
+      where: { id },
+    });
+    if (video === null) {
+      throw new NotFoundException('Video not found');
     }
+    return video;
   }
 
   /**
@@ -157,7 +159,7 @@ export class VideosService {
         throw error;
       }
       this.logger.error(`Error removing video: ${error.message}`);
-      throw new HttpException('Error removing video', HttpStatus.BAD_REQUEST);
+      throw error;
     }
   }
 }

@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UsersService } from '@api/users/users.service';
+import { TYPE_PRIVACY } from '@api/videos/constants';
 import { VideosService } from '@api/videos/videos.service';
 import { Nullable, ServiceResponse } from '@shared/types';
 
@@ -31,7 +32,7 @@ export class LikesService {
       newLike.user = await this.usersService.findById(like.userId);
       const video = await this.videosService.findOne(like.videoId);
       if (!video) {
-        throw new Error('Video not found');
+        throw new NotFoundException('Video not found');
       }
       newLike.video = video;
       return this.likeRepository.save(newLike);
@@ -90,5 +91,21 @@ export class LikesService {
       this.logger.error(`Error toggling like: ${error}`);
       throw error;
     }
+  }
+
+  async getVideosMostPopular(isAuthenticated: boolean) {
+    const queryBuilder = `likes.isLike = :isLike ${isAuthenticated ? '' : 'AND video.privacy = :privacy'}`;
+
+    return this.likeRepository
+      .createQueryBuilder('likes')
+      .leftJoinAndSelect('likes.video', 'video')
+      .select(['COUNT(video.id) as totalLikes', 'video'])
+      .groupBy('video.id')
+      .orderBy('totalLikes', 'DESC')
+      .where(queryBuilder, {
+        isLike: true,
+        privacy: TYPE_PRIVACY.PUBLIC,
+      })
+      .getRawMany();
   }
 }

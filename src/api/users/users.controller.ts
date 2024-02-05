@@ -1,37 +1,31 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Patch } from '@nestjs/common';
 
 import { PayloadDto } from '@api/auth/dto/payload.dto';
-import { OwnerGuard } from '@common/guards/owner.guard';
 import { Payload } from '@shared/decorators/payload.decorator';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
-@UseGuards(OwnerGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Patch(':id')
+  @Patch()
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Payload() payload: PayloadDto,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.update(payload.userId, updateUserDto);
   }
 
-  @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+  @Delete()
+  async remove(@Payload() payload: PayloadDto) {
+    return this.usersService.remove(payload.userId);
+  }
+
+  @Get('videos')
+  async getVideosUser(@Payload() payload: PayloadDto) {
+    return this.usersService.getVideosUser(payload.userId);
   }
 
   @Get()

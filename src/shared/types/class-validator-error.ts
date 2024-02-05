@@ -4,4 +4,6 @@ export type ClassValidatorError = {
     error: string;
     statusCode: number;
   };
+  name?: string;
+  message?: string;
 };

@@ -2,6 +2,7 @@ import { Injectable, Logger, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 
+import { VideosService } from '@api/videos/videos.service';
 import { bcrypt } from '@common/utils';
 import { Nullable, ServiceResponse } from '@shared/types';
 
@@ -16,6 +17,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly videosService: VideosService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<ServiceResponse> {
@@ -47,14 +49,9 @@ export class UsersService {
       const updateUser = { ...updateUserDto };
 
       if (updateUser?.email) {
-        const userOrError = await this.findByEmail(updateUserDto.email);
-        if ('error' in userOrError) {
-          throw userOrError;
-        }
+        const user = await this.findByEmail(updateUserDto.email);
 
-        const user = userOrError as User;
-
-        if (user.id !== id) {
+        if (user !== null) {
           throw new ConflictException(
             `Email ${updateUserDto.email} already exists.`,
           );
@@ -90,12 +87,16 @@ export class UsersService {
 
   async remove(id: number): Promise<ServiceResponse> {
     try {
-      const userOrError = await this.findById(id);
-      if ('error' in userOrError) {
-        throw userOrError;
-      }
+      const user = await this.userRepository.findOne({
+        relations: ['videos'],
+        where: { id },
+      });
 
-      const user = userOrError as User;
+      const { videos } = user;
+
+      videos.forEach(async (video) => {
+        await this.videosService.remove(video.id, id);
+      });
 
       await this.userRepository.softDelete(id);
       return {
@@ -118,5 +119,14 @@ export class UsersService {
       this.logger.error(`Error get user with password: ${error}`);
       throw error;
     }
+  }
+
+  async getVideosUser(id: number) {
+    return this.userRepository
+      .createQueryBuilder('users')
+      .leftJoin('users.videos', 'video')
+      .select(['video'])
+      .where('users.id = :id', { id })
+      .getRawMany();
   }
 }
