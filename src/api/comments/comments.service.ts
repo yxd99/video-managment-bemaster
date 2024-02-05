@@ -8,10 +8,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { PayloadDto } from '@api/auth/dto/payload.dto';
-import { User } from '@api/users/entities/user.entity';
 import { UsersService } from '@api/users/users.service';
 import { TYPE_PRIVACY } from '@api/videos/constants';
-import { Video } from '@api/videos/entities/video.entity';
 import { VideosService } from '@api/videos/videos.service';
 import { ServiceResponse } from '@shared/types';
 
