@@ -6,16 +6,16 @@ import { UsersService } from '@api/users/users.service';
 import { VideosService } from '@api/videos/videos.service';
 import { Nullable, ServiceResponse } from '@shared/types';
 
-import { VideoLikeDto } from './dto/video-like.dto';
-import { VideoLike } from './entities/video-like.entity';
+import { LikeDto } from './dto/like.dto';
+import { Like } from './entities/like.entity';
 
 @Injectable()
-export class VideoLikesService {
-  private readonly logger = new Logger(VideoLikesService.name);
+export class LikesService {
+  private readonly logger = new Logger(LikesService.name);
 
   constructor(
-    @InjectRepository(VideoLike)
-    private readonly videoLikeRepository: Repository<VideoLike>,
+    @InjectRepository(Like)
+    private readonly likeRepository: Repository<Like>,
     private readonly videosService: VideosService,
     private readonly usersService: UsersService,
   ) {}
@@ -25,16 +25,16 @@ export class VideoLikesService {
    * @param like - The video like data.
    * @returns The created video like.
    */
-  async create(like: VideoLikeDto): Promise<VideoLike> {
+  async create(like: LikeDto): Promise<Like> {
     try {
-      const newLike = this.videoLikeRepository.create();
+      const newLike = this.likeRepository.create();
       newLike.user = await this.usersService.findById(like.userId);
       const video = await this.videosService.findOne(like.videoId);
       if (!video) {
         throw new Error('Video not found');
       }
       newLike.video = video;
-      return this.videoLikeRepository.save(newLike);
+      return this.likeRepository.save(newLike);
     } catch (error) {
       this.logger.error(`Error creating like: ${error}`);
       throw error;
@@ -43,13 +43,13 @@ export class VideoLikesService {
 
   /**
    * Toggles the like status of a video like (changes it from like to dislike or vice versa).
-   * @param videoLike - The video like to toggle.
+   * @param like - The video like to toggle.
    * @returns The updated video like.
    */
-  async setLike(videoLike: VideoLike): Promise<VideoLike> {
-    return this.videoLikeRepository.save({
-      ...videoLike,
-      isLike: !videoLike.isLike,
+  async setLike(like: Like): Promise<Like> {
+    return this.likeRepository.save({
+      ...like,
+      isLike: !like.isLike,
     });
   }
 
@@ -59,12 +59,9 @@ export class VideoLikesService {
    * @param videoId - The ID of the video.
    * @returns The like object if found, or null if not found.
    */
-  async getLikeId(
-    userId: number,
-    videoId: number,
-  ): Promise<Nullable<VideoLike>> {
+  async getLikeId(userId: number, videoId: number): Promise<Nullable<Like>> {
     try {
-      return await this.videoLikeRepository.findOne({
+      return await this.likeRepository.findOne({
         where: { user: { id: userId }, video: { id: videoId } },
       });
     } catch (error) {
@@ -79,7 +76,7 @@ export class VideoLikesService {
    * @param likeDto - The video like data.
    * @returns A success message.
    */
-  async toggleLike(likeDto: VideoLikeDto): Promise<ServiceResponse> {
+  async toggleLike(likeDto: LikeDto): Promise<ServiceResponse> {
     try {
       const like = await this.getLikeId(likeDto.userId, likeDto.videoId);
       const statusLike = like

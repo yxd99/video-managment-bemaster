@@ -22,7 +22,7 @@ import {
 
 import { PayloadDto } from '@api/auth/dto/payload.dto';
 import { Public } from '@common/guards/public.guard';
-import { commentsSchemas } from '@schemas/index';
+import { commentSchema } from '@schemas/index';
 import { Payload } from '@shared/decorators';
 import { ServiceResponse } from '@shared/types';
 
@@ -34,16 +34,16 @@ import { Comment } from './entities/comment.entity';
 @Controller('comments')
 @ApiBearerAuth()
 @ApiTags('comments')
-@ApiUnauthorizedResponse(commentsSchemas.common.unauhtorizedSchema)
-@ApiBadRequestResponse(commentsSchemas.common.badRequestSchema)
-@ApiNotFoundResponse(commentsSchemas.common.notFoundSchema)
+@ApiUnauthorizedResponse(commentSchema.common.unauhtorizedSchema)
+@ApiBadRequestResponse(commentSchema.common.badRequestSchema)
+@ApiNotFoundResponse(commentSchema.common.notFoundSchema)
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
   @Post(':videoId')
   @HttpCode(HttpStatus.OK)
-  @ApiNotFoundResponse(commentsSchemas.create.notFoundSchema)
-  @ApiOkResponse(commentsSchemas.create.okSchema)
+  @ApiNotFoundResponse(commentSchema.create.notFoundSchema)
+  @ApiOkResponse(commentSchema.create.okSchema)
   async create(
     @Body() createCommentDto: CreateCommentDto,
     @Param('videoId', ParseIntPipe) videoId: number,
@@ -59,9 +59,9 @@ export class CommentsController {
 
   @Public()
   @Get('video/:videoId')
-  @ApiNotFoundResponse(commentsSchemas.create.notFoundSchema)
-  @ApiForbiddenResponse(commentsSchemas.findByVideo.forbiddenSchema)
-  @ApiOkResponse(commentsSchemas.findByVideo.okSchema)
+  @ApiNotFoundResponse(commentSchema.create.notFoundSchema)
+  @ApiForbiddenResponse(commentSchema.findByVideo.forbiddenSchema)
+  @ApiOkResponse(commentSchema.findByVideo.okSchema)
   async findByVideo(
     @Param('videoId', ParseIntPipe) videoId: number,
     @Payload() payload: PayloadDto,
@@ -78,7 +78,7 @@ export class CommentsController {
 
   @Public()
   @Get(':id')
-  @ApiOkResponse(commentsSchemas.findById.okSchema)
+  @ApiOkResponse(commentSchema.findById.okSchema)
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @Payload() payload: PayloadDto,
@@ -93,8 +93,8 @@ export class CommentsController {
   }
 
   @Patch(':id')
-  @ApiForbiddenResponse(commentsSchemas.common.forbiddenSchema)
-  @ApiOkResponse(commentsSchemas.update.okSchema)
+  @ApiForbiddenResponse(commentSchema.common.forbiddenSchema)
+  @ApiOkResponse(commentSchema.update.okSchema)
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCommentDto: UpdateCommentDto,
@@ -112,8 +112,8 @@ export class CommentsController {
   }
 
   @Delete(':id')
-  @ApiForbiddenResponse(commentsSchemas.common.forbiddenSchema)
-  @ApiOkResponse(commentsSchemas.remove.okSchema)
+  @ApiForbiddenResponse(commentSchema.common.forbiddenSchema)
+  @ApiOkResponse(commentSchema.remove.okSchema)
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @Payload() payload: PayloadDto,

@@ -1,3 +1,4 @@
+import { Like } from '@api/likes/entities/like.entity';
 import {
   Column,
   CreateDateColumn,
@@ -70,4 +71,7 @@ export class Video {
 
   @OneToMany(() => Comment, (comment) => comment.video)
   comments: Comment[];
+
+  @OneToMany(() => Like, (likes) => likes.video)
+  likes: Like[];
 }

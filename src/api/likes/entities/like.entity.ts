@@ -11,8 +11,8 @@ import {
 import { User } from '@api/users/entities/user.entity';
 import { Video } from '@api/videos/entities/video.entity';
 
-@Entity('video_likes')
-export class VideoLike {
+@Entity('likes')
+export class Like {
   @PrimaryGeneratedColumn()
   id: number;
 

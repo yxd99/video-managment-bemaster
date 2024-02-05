@@ -1,4 +1,4 @@
-export * as authSchemas from './auth';
-export * as commentsSchemas from './comments';
-export * as videoLikeSchema from './video-likes';
+export * as authSchema from './auth';
+export * as commentSchema from './comments';
+export * as likeSchema from './likes';
 export * as videosSchema from './videos';

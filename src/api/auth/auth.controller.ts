@@ -14,7 +14,7 @@ import { Auth } from '@api/auth/auth.type';
 import { LoginDto } from '@api/auth/dto/login.dto';
 import { CreateUserDto } from '@api/users/dto/create-user.dto';
 import { Public } from '@common/guards/public.guard';
-import { authSchemas } from '@schemas/index';
+import { authSchema } from '@schemas/index';
 
 @Public()
 @Controller('auth')
@@ -23,9 +23,9 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @ApiCreatedResponse(authSchemas.register.createdSchema)
-  @ApiBadRequestResponse(authSchemas.register.badRequestSchema)
-  @ApiConflictResponse(authSchemas.register.conflictSchema)
+  @ApiCreatedResponse(authSchema.register.createdSchema)
+  @ApiBadRequestResponse(authSchema.register.badRequestSchema)
+  @ApiConflictResponse(authSchema.register.conflictSchema)
   @ApiBody({ type: CreateUserDto })
   async register(@Body() body: CreateUserDto): Promise<Auth> {
     await this.authService.register(body);
@@ -44,8 +44,8 @@ export class AuthController {
    * @returns The generated token.
    */
   @Post('login')
-  @ApiUnauthorizedResponse(authSchemas.login.unauhtorizedSchema)
-  @ApiOkResponse(authSchemas.login.okSchema)
+  @ApiUnauthorizedResponse(authSchema.login.unauhtorizedSchema)
+  @ApiOkResponse(authSchema.login.okSchema)
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: LoginDto })
   async login(@Body() body: LoginDto): Promise<Auth> {

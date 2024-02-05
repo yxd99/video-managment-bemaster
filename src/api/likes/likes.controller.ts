@@ -16,27 +16,27 @@ import {
 
 import { PayloadDto } from '@api/auth/dto/payload.dto';
 import { Payload } from '@decorators/payload.decorator';
-import { videoLikeSchema } from '@schemas/index';
+import { likeSchema } from '@schemas/index';
 import { ServiceResponse } from '@shared/types';
 
-import { VideoLikesService } from './video-likes.service';
+import { LikesService } from './likes.service';
 
-@Controller('video-likes')
+@Controller('likes')
 @ApiTags('Videos')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse(videoLikeSchema.common.unauhtorizedSchema)
-@ApiNotFoundResponse(videoLikeSchema.common.notFoundSchema)
-@ApiOkResponse(videoLikeSchema.common.okSchema)
-export class VideoLikesController {
-  constructor(private readonly videoLikesService: VideoLikesService) {}
+@ApiUnauthorizedResponse(likeSchema.common.unauhtorizedSchema)
+@ApiNotFoundResponse(likeSchema.common.notFoundSchema)
+@ApiOkResponse(likeSchema.common.okSchema)
+export class LikesController {
+  constructor(private readonly likesService: LikesService) {}
 
-  @Post(':videoId')
+  @Post('video/:videoId')
   @HttpCode(HttpStatus.OK)
   async like(
     @Param('videoId', ParseIntPipe) videoId: number,
     @Payload() payload: PayloadDto,
   ): Promise<ServiceResponse> {
-    return this.videoLikesService.toggleLike({
+    return this.likesService.toggleLike({
       videoId,
       userId: payload.userId,
     });

@@ -6,7 +6,7 @@ export const notFoundSchema: ApiResponseOptions = {
     properties: {
       path: {
         type: 'string',
-        example: '/api/video-likes/1',
+        example: '/api/likes/1',
       },
       timestamp: {
         type: 'string',

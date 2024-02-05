@@ -1,3 +1,4 @@
+import { LikesModule } from '@api/likes/likes.module';
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -6,7 +7,6 @@ import { DataSource } from 'typeorm';
 import { AuthModule } from '@api/auth/auth.module';
 import { CommentsModule } from '@api/comments/comments.module';
 import { UsersModule } from '@api/users/users.module';
-import { VideoLikesModule } from '@api/video-likes/video-likes.module';
 import { VideosModule } from '@api/videos/videos.module';
 import { typeorm } from '@common/config';
 import { ErrorHandlerModule } from '@common/error-handler/error-handler.module';
@@ -22,7 +22,7 @@ import { CloudinaryModule } from '@shared/cloudinary/cloudinary.module';
     UsersModule,
     VideosModule,
     CloudinaryModule,
-    VideoLikesModule,
+    LikesModule,
     CommentsModule,
     ErrorHandlerModule,
   ],
