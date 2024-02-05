@@ -1,4 +1,4 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -6,7 +6,7 @@ import { User } from '@api/users/entities/user.entity';
 import { UsersService } from '@api/users/users.service';
 import { Video } from '@api/videos/entities/video.entity';
 import { VideosService } from '@api/videos/videos.service';
-import { ServiceResponse } from '@shared/types';
+import { Nullable, ServiceResponse } from '@shared/types';
 
 import { VideoLikeDto } from './dto/video-like.dto';
 import { VideoLike } from './entities/video-like.entity';
@@ -22,83 +22,53 @@ export class VideoLikesService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(like: VideoLikeDto): Promise<ServiceResponse> {
+  async create(like: VideoLikeDto): Promise<VideoLike> {
     try {
       const newLike = await this.videoLikeRepository.create();
       newLike.user = (await this.usersService.findById(like.userId)) as User;
-      newLike.video = (await this.videosService.findOne(like.videoId)) as Video;
-      await this.videoLikeRepository.save(newLike);
-      return { message: 'Like sended successful' };
+      const videOrError = await this.videosService.findOne(like.videoId);
+      if ('error' in videOrError) {
+        throw videOrError;
+      }
+      newLike.video = videOrError as Video;
+      return this.videoLikeRepository.save(newLike);
     } catch (error) {
-      this.logger.error(`Error creating like: ${error.message}`);
-      return {
-        message: 'Unable to create like at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      this.logger.error(`Error creating like: ${error}`);
+      throw error;
     }
   }
 
-  async setLike(likeId: number): Promise<ServiceResponse> {
-    try {
-      const like = await this.getLike(likeId);
-
-      if ('error' in like) {
-        throw like;
-      }
-      if ('isLike' in like) {
-        like.isLike = !like.isLike;
-        await this.videoLikeRepository.update(likeId, like);
-        return {
-          message: `${like.isLike ? 'like' : 'dislike'} sended successful`,
-        };
-      }
-      return {
-        message: 'Invalid response format from database',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
-    } catch (error) {
-      this.logger.error(`Error setting like: ${error.message}`);
-      return {
-        message: 'Unable to set like at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
-    }
+  async setLike(videoLike: VideoLike): Promise<VideoLike> {
+    const likeTransform = { ...videoLike, isLike: !videoLike.isLike };
+    return this.videoLikeRepository.save(likeTransform);
   }
 
-  async getLike(likeId: number): Promise<VideoLike | ServiceResponse> {
+  async getLikeId(
+    userId: number,
+    videoId: number,
+  ): Promise<Nullable<VideoLike>> {
     try {
-      const like = await this.videoLikeRepository.findOne({
-        relations: ['user', 'video'],
-        where: { id: likeId },
+      return await this.videoLikeRepository.findOne({
+        where: { user: { id: userId }, video: { id: videoId } },
       });
-
-      if (!like) {
-        return {
-          error: `Like ${likeId} not found`,
-          statusCode: HttpStatus.NOT_FOUND,
-        };
-      }
-
-      return like;
     } catch (error) {
       this.logger.error(`Error fetching like: ${error.message}`);
-      return {
-        message: 'Unable to fetch like at the moment. Please try again later.',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      throw error;
     }
   }
 
-  async getLikeId(likeDto: VideoLikeDto): Promise<number | null> {
+  async toggleLike(likeDto: VideoLikeDto): Promise<ServiceResponse> {
     try {
-      const like = await this.videoLikeRepository.findOneBy({
-        user: { id: likeDto.userId },
-        video: { id: likeDto.videoId },
-      });
-      return like?.id ?? null;
+      const like = await this.getLikeId(likeDto.userId, likeDto.videoId);
+      const statusLike =
+        like !== null ? await this.setLike(like) : await this.create(likeDto);
+
+      return {
+        message: `${statusLike.isLike ? 'like sended successful' : 'like removed'}`,
+      };
     } catch (error) {
-      this.logger.error(`Error getting like ID: ${error.message}`);
-      return null;
+      this.logger.error(`Error like: ${error}`);
+      throw error;
     }
   }
 }
