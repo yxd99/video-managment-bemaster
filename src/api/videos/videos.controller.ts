@@ -16,24 +16,50 @@ import {
   Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 import { PayloadDto } from '@api/auth/dto/payload.dto';
 import { Public } from '@common/guards/public.guard';
+import { videosSchema } from '@schemas/index';
 import { Payload } from '@shared/decorators/payload.decorator';
 import { ServiceResponse } from '@shared/types';
 
 import { MAX_SIZE_VIDEO, TYPE_PRIVACY } from './constants';
 import { CreateVideoDto } from './dto/create-video.dto';
+import { QueryFindDto } from './dto/query-find.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { Video } from './entities/video.entity';
 import { VideosService } from './videos.service';
 
 @Controller('videos')
+@ApiTags('Videos')
+@ApiBearerAuth()
 export class VideosController {
   constructor(private readonly videosService: VideosService) {}
 
   @Post()
   @UseInterceptors(FileInterceptor('video'))
+  @ApiUnauthorizedResponse(videosSchema.common.unauhtorizedSchema)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        comment: { type: 'string' },
+        outletId: { type: 'integer' },
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
   async create(
     @UploadedFile(
       new ParseFilePipe({
@@ -55,10 +81,10 @@ export class VideosController {
   @Get()
   async findAll(
     @Payload() payload: PayloadDto,
-    @Query('search') search: string,
+    @Query('search') search: QueryFindDto,
   ): Promise<Video[] | ServiceResponse> {
     const isLogged = Boolean(payload);
-    const videos = await this.videosService.findAll(isLogged, search);
+    const videos = await this.videosService.findAll(isLogged, search.search);
 
     if ('error' in videos) {
       throw videos;
@@ -89,6 +115,7 @@ export class VideosController {
 
   @Patch(':id')
   @UseInterceptors(FileInterceptor('video'))
+  @ApiUnauthorizedResponse(videosSchema.common.unauhtorizedSchema)
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateVideoDto: UpdateVideoDto,
@@ -108,6 +135,7 @@ export class VideosController {
   }
 
   @Delete(':id')
+  @ApiUnauthorizedResponse(videosSchema.common.unauhtorizedSchema)
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @Payload() payload: PayloadDto,
