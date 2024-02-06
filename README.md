@@ -3,7 +3,7 @@
 > Project is deployed [here](https://video-management-bemaster.onrender.com/api)
 
 
-# Video Managment Be Master
+# Video Management Be Master
 This project consists to manage videos, users, comments, likes, etc. is a cloudinary as SaaS to be able to save videos and store in an optimal way the videos. The project is made in NestJS.
 
 ## Installation
