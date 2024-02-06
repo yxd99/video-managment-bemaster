@@ -10,8 +10,15 @@ export function config(): TypeOrmModuleOptions {
     host: configService.get('DB_HOST'),
     port: Number(configService.get('DB_PORT')),
     database: configService.get('DB_NAME'),
+    schema: 'public',
     type: 'postgres',
-    synchronize: environment !== 'prod',
+    ssl: true,
+    extra: {
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    },
+    synchronize: true,
     entities: [`${__dirname}/**/*.entity{.ts,.js}`],
     autoLoadEntities: true,
     migrations: [`${__dirname}/migrations/**/*{.ts,.js}`],

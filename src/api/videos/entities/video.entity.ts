@@ -26,14 +26,12 @@ export class Video {
 
   @Column({
     type: 'text',
-    default: '',
   })
   description: string;
 
   @Column({
     type: 'text',
     nullable: false,
-    default: '',
   })
   url: string;
 
@@ -46,13 +44,11 @@ export class Video {
 
   @Column({
     type: 'text',
-    default: '',
   })
   publicId: string;
 
   @Column({
     type: 'text',
-    default: '',
   })
   credits: string;
 
