@@ -18,7 +18,7 @@ export function config(): TypeOrmModuleOptions {
         rejectUnauthorized: false,
       },
     },
-    synchronize: true,
+    synchronize: environment !== 'prod',
     entities: [`${__dirname}/**/*.entity{.ts,.js}`],
     autoLoadEntities: true,
     migrations: [`${__dirname}/migrations/**/*{.ts,.js}`],
