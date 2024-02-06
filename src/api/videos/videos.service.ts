@@ -27,11 +27,6 @@ export class VideosService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  /**
-   * Creates a new video by uploading the video file to the cloud storage and saving the video details in the database.
-   * @param createVideoDto The data for creating a new video.
-   * @returns The created video.
-   */
   async create(createVideoDto: CreateVideoDto): Promise<Video> {
     try {
       const { video, ...data } = createVideoDto;
@@ -49,12 +44,6 @@ export class VideosService {
     }
   }
 
-  /**
-   * Retrieves all videos, optionally filtered by a search query and authenticated status.
-   * @param isAuthenticated Indicates if the user is authenticated.
-   * @param query The search query.
-   * @returns The list of videos.
-   */
   async findAll(
     isAuthenticated: boolean,
     query?: QueryParamsDto,
@@ -83,11 +72,6 @@ export class VideosService {
       .getMany();
   }
 
-  /**
-   * Retrieves a specific video by its ID, including the associated user and comments.
-   * @param id The ID of the video.
-   * @returns The video or a service response indicating an error.
-   */
   async findOne(id: number): Promise<Video> {
     const video = await this.videoRepository.findOne({
       relations: ['user', 'comments', 'comments.user'],
@@ -99,12 +83,10 @@ export class VideosService {
     return video;
   }
 
-  /**
-   * Updates a video by uploading a new video file and updating the video details.
-   * @param id The ID of the video to update.
-   * @param updateVideoDto The data for updating the video.
-   */
-  async update(id: number, updateVideoDto: UpdateVideoDto): Promise<void> {
+  async update(
+    id: number,
+    updateVideoDto: UpdateVideoDto,
+  ): Promise<ServiceResponse> {
     try {
       const { video: videoFile, ...infoVideo } = updateVideoDto;
       const video = await this.findOne(id);
@@ -118,17 +100,15 @@ export class VideosService {
       }
 
       await this.videoRepository.save({ ...video, ...infoVideo });
+      return {
+        message: 'Video has been update',
+      };
     } catch (error) {
       this.logger.error(`Error updating video: ${error.message}`);
       throw new HttpException('Error updating video', HttpStatus.BAD_REQUEST);
     }
   }
 
-  /**
-   * Removes a video by deleting the video file from the cloud storage and marking the video as removed in the database.
-   * @param id The ID of the video to remove.
-   * @param userId The ID of the user removing the video.
-   */
   async remove(id: number, userId: number): Promise<ServiceResponse> {
     try {
       const videoOrError = await this.findOne(id);

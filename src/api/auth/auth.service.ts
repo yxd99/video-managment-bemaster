@@ -10,7 +10,6 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from '@api/users/dto/create-user.dto';
 import { User } from '@api/users/entities/user.entity';
 import { UsersService } from '@api/users/users.service';
-import { ServiceResponse } from '@shared/types';
 
 import { Auth } from './auth.entity';
 import { AuthType } from './auth.type';
@@ -26,9 +25,7 @@ export class AuthService {
     private readonly usersService: UsersService,
   ) {}
 
-  async register(
-    createUserDto: CreateUserDto,
-  ): Promise<AuthType | ServiceResponse> {
+  async register(createUserDto: CreateUserDto): Promise<AuthType> {
     const existingUser = await this.usersService.findByEmail(
       createUserDto.email,
     );

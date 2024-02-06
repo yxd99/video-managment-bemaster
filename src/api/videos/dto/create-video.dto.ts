@@ -37,7 +37,7 @@ export class CreateVideoDto {
     default: TYPE_PRIVACY.PUBLIC,
     required: false,
   })
-  privacy: string;
+  privacy: TYPE_PRIVACY;
 
   @ApiProperty({
     format: 'video/*',

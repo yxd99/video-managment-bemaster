@@ -85,7 +85,7 @@ export class VideosController {
   async findAll(
     @Payload() payload: PayloadDto,
     @Query() query: QueryParamsDto,
-  ): Promise<Video[] | ServiceResponse> {
+  ): Promise<Video[]> {
     const isLogged = Boolean(payload);
     if (!isLogged && query.privacy === TYPE_PRIVACY.PRIVATE) {
       throw new ForbiddenException('You must log in first');
@@ -98,7 +98,7 @@ export class VideosController {
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @Payload() payload: PayloadDto,
-  ): Promise<Video | ServiceResponse> {
+  ): Promise<Video> {
     const video = await this.videosService.findOne(id);
 
     if (!payload && video.privacy === TYPE_PRIVACY.PRIVATE) {

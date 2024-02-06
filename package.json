@@ -34,6 +34,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cloudinary": "^2.0.0",
+    "jest-mock": "^29.7.0",
     "mysql2": "^3.9.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -95,7 +96,7 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageDirectory": "./coverage",
     "testEnvironment": "node"
   }
 }

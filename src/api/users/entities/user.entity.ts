@@ -40,7 +40,7 @@ export class User {
   @DeleteDateColumn({
     select: false,
   })
-  delete_date: Date;
+  removedAt: Date;
 
   @OneToMany(() => Video, (video) => video.user)
   videos: Video[];

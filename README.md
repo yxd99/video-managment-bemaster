@@ -1,73 +1,78 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+# Video Managment Be Master
+This project consists to manage videos, users, comments, likes, etc. is a cloudinary as SaaS to be able to save videos and store in an optimal way the videos. The project is made in NestJS.
 
 ## Installation
-
+Make sure you have Node Version Manager (nvm) installed on your system. You can install it from https://github.com/nvm-sh/nvm.
 ```bash
-$ npm install
+# Select the version of Node.js recommended for the project
+nvm use
+
+# Install project dependencies
+npm i
 ```
 
-## Running the app
+## Run
+In development mode:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run start:dev
+```
+In production mode:
+```bash
+npm run start:prod
 ```
 
-## Test
+## Commands
+| Command   | Description |
+| --------- | ----------- |
+| build     | Compiles the project for production. |
+| format    | Format source code with Prettier. |
+| start     | Start the server in development mode. |
+| start:dev | Starts the server in development mode with supervision. |
+| start:debug | Starts the server in development mode with debugging. |
+| start:prod | Starts the server in production mode. |
+| lint      | Run ESLint to find syntax and style errors. |
+| test      | Run Jest to perform unit tests. |
+| test:watch | Runs Jest for continuous unit testing. |
+| test:cov  | Run Jest to perform unit tests and generate code coverage. |
+| test:debug | Run Jest to perform unit tests with debugging. |
+
+
+
+## Setup
+The project uses a configuration file called example.env. This file contains the following variables:
+
+| Category | Key | Value |
+| --- | --- | --- |
+| General | PORT | 3000 |
+| General | ENV | development |
+| Database | DB_USER | root |
+| Database | DB_PASSWORD |  |
+| Database | DB_HOST | 127.0.0.1 |
+| Database | DB_PORT | 3306 |
+| Database | DB_NAME | video_bemaster |
+| Security | JWT_SECRET |  |
+| Security | ENCRYPT_PASSWORD |  |
+| Cloudinary | CLOUDINARY_NAME |  |
+| Cloudinary | CLOUDINARY_API_KEY |  |
+| Cloudinary | CLOUDINARY_API_SECRET |  |
+
+
+You must copy the .env.example file and rename it to .env.
+
+## Docker
+The project includes a DockerCompose to create a Docker container. To create the container, run the following command:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker up
 ```
 
-## Support
+## Documentation
+The project has documentation made in swagger, to visualize it visit:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+http://localhost:3000/api
+```
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+## Unit Testing
+It also has unit tests, uses `npm run test:cov` to generate the document and check the coverage.

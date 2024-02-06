@@ -1,5 +1,7 @@
 export class LikeDto {
   userId: number;
 
-  videoId: number;
+  videoId?: number;
+
+  comment?: number;
 }

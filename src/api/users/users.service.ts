@@ -126,7 +126,7 @@ export class UsersService {
     }
   }
 
-  async getVideosUser(id: number) {
+  async getVideosUser(id: number): Promise<User[]> {
     return this.userRepository
       .createQueryBuilder('users')
       .leftJoin('users.videos', 'video')

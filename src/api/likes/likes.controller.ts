@@ -1,52 +1,42 @@
-import {
-  Controller,
-  Post,
-  Param,
-  ParseIntPipe,
-  HttpCode,
-  HttpStatus,
-  Get,
-} from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { Controller, Post, Get, Param, ParseIntPipe } from '@nestjs/common';
 
 import { PayloadDto } from '@api/auth/dto/payload.dto';
-import { Public } from '@common/guards/public.guard';
 import { Payload } from '@decorators/payload.decorator';
-import { likeSchema } from '@schemas/index';
-import { ServiceResponse } from '@shared/types';
 
+import { TARGET } from './constants';
 import { LikesService } from './likes.service';
 
 @Controller('likes')
-@ApiTags('Videos')
-@ApiBearerAuth()
-@ApiUnauthorizedResponse(likeSchema.common.unauhtorizedSchema)
-@ApiNotFoundResponse(likeSchema.common.notFoundSchema)
-@ApiOkResponse(likeSchema.common.okSchema)
 export class LikesController {
   constructor(private readonly likesService: LikesService) {}
 
-  @Post('video/:videoId')
-  @HttpCode(HttpStatus.OK)
-  async like(
+  @Post('/videos/:videoId')
+  async toggleLikeVideo(
     @Param('videoId', ParseIntPipe) videoId: number,
     @Payload() payload: PayloadDto,
-  ): Promise<ServiceResponse> {
-    return this.likesService.toggleLike({
-      videoId,
-      userId: payload.userId,
-    });
+  ) {
+    return this.likesService.toggleLike(payload.userId, videoId, TARGET.VIDEO);
   }
 
-  @Public()
-  @Get('video/most-popular')
-  async getMostPopular(@Payload() payload: PayloadDto) {
-    return this.likesService.getVideosMostPopular(Boolean(payload));
+  @Post('/comments/:commentId')
+  async toggleLikeComentario(
+    @Param('commentId', ParseIntPipe) comentarioId: number,
+    @Payload() payload: PayloadDto,
+  ) {
+    return this.likesService.toggleLike(
+      payload.userId,
+      comentarioId,
+      TARGET.COMMENT,
+    );
+  }
+
+  @Get('/videos/most-liked')
+  async getMostLikedVideos() {
+    return this.likesService.getMostLikedVideos();
+  }
+
+  @Get('/comentarios/most-liked')
+  async getMostLikedComentarios() {
+    return this.likesService.getMostLikedComments();
   }
 }

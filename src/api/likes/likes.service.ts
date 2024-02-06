@@ -1,111 +1,83 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { UsersService } from '@api/users/users.service';
-import { TYPE_PRIVACY } from '@api/videos/constants';
+import { CommentsService } from '@api/comments/comments.service';
 import { VideosService } from '@api/videos/videos.service';
-import { Nullable, ServiceResponse } from '@shared/types';
 
-import { LikeDto } from './dto/like.dto';
+import { TARGET } from './constants';
 import { Like } from './entities/like.entity';
+import { Target } from './entities/target.entity';
 
 @Injectable()
 export class LikesService {
-  private readonly logger = new Logger(LikesService.name);
-
   constructor(
     @InjectRepository(Like)
     private readonly likeRepository: Repository<Like>,
-    private readonly videosService: VideosService,
-    private readonly usersService: UsersService,
+    @InjectRepository(Target)
+    private readonly targetRepository: Repository<Target>,
+    private readonly videoService: VideosService,
+    private readonly commentService: CommentsService,
   ) {}
 
-  /**
-   * Creates a new video like by associating a user and a video.
-   * @param like - The video like data.
-   * @returns The created video like.
-   */
-  async create(like: LikeDto): Promise<Like> {
-    try {
-      const newLike = this.likeRepository.create();
-      newLike.user = await this.usersService.findById(like.userId);
-      const video = await this.videosService.findOne(like.videoId);
-      if (!video) {
-        throw new NotFoundException('Video not found');
-      }
-      newLike.video = video;
-      return this.likeRepository.save(newLike);
-    } catch (error) {
-      this.logger.error(`Error creating like: ${error}`);
-      throw error;
-    }
-  }
-
-  /**
-   * Toggles the like status of a video like (changes it from like to dislike or vice versa).
-   * @param like - The video like to toggle.
-   * @returns The updated video like.
-   */
-  async setLike(like: Like): Promise<Like> {
-    return this.likeRepository.save({
-      ...like,
-      isLike: !like.isLike,
+  async toggleLike(
+    userId: number,
+    contentId: number,
+    contentType: string,
+  ): Promise<Like> {
+    let target = await this.targetRepository.findOne({
+      where: { targetId: contentId, targetType: contentType },
     });
-  }
 
-  /**
-   * Retrieves the like ID for a specific user and video.
-   * @param userId - The ID of the user.
-   * @param videoId - The ID of the video.
-   * @returns The like object if found, or null if not found.
-   */
-  async getLikeId(userId: number, videoId: number): Promise<Nullable<Like>> {
-    try {
-      return await this.likeRepository.findOne({
-        where: { user: { id: userId }, video: { id: videoId } },
-      });
-    } catch (error) {
-      this.logger.error(`Error fetching like: ${error.message}`);
-      throw error;
+    if (!target) {
+      target = await this.targetRepository.save({ targetType: contentType });
+
+      if (contentType === TARGET.VIDEO) {
+        const video = await this.videoService.findOne(contentId);
+        if (video === null) {
+          throw new NotFoundException('Video not found');
+        }
+        target.video = video;
+      } else if (contentType === TARGET.COMMENT) {
+        const comment = await this.commentService.findOne(contentId);
+        if (comment === null) {
+          throw new NotFoundException('Video not found');
+        }
+        target.comment = comment;
+      }
+
+      await this.targetRepository.save(target);
     }
-  }
 
-  /**
-   * Toggles the like status for a specific user and video.
-   * If the like exists, it is toggled. If it doesn't exist, a new like is created.
-   * @param likeDto - The video like data.
-   * @returns A success message.
-   */
-  async toggleLike(likeDto: LikeDto): Promise<ServiceResponse> {
-    try {
-      const like = await this.getLikeId(likeDto.userId, likeDto.videoId);
-      const statusLike = like
-        ? await this.setLike(like)
-        : await this.create(likeDto);
+    const existingLike = await this.likeRepository.findOne({
+      where: { userId, target },
+    });
 
-      return {
-        message: `${statusLike.isLike ? 'like sent successfully' : 'like removed'}`,
-      };
-    } catch (error) {
-      this.logger.error(`Error toggling like: ${error}`);
-      throw error;
+    if (existingLike) {
+      return this.likeRepository.remove(existingLike);
     }
+
+    const like = this.likeRepository.create({ userId, target });
+    return this.likeRepository.save(like);
   }
 
-  async getVideosMostPopular(isAuthenticated: boolean) {
-    const queryBuilder = `likes.isLike = :isLike ${isAuthenticated ? '' : 'AND video.privacy = :privacy'}`;
-
+  async getMostLikedVideos(): Promise<Like[]> {
     return this.likeRepository
       .createQueryBuilder('likes')
-      .leftJoinAndSelect('likes.video', 'video')
-      .select(['COUNT(video.id) as totalLikes', 'video'])
-      .groupBy('video.id')
-      .orderBy('totalLikes', 'DESC')
-      .where(queryBuilder, {
-        isLike: true,
-        privacy: TYPE_PRIVACY.PUBLIC,
-      })
-      .getRawMany();
+      .leftJoinAndSelect('likes.target', 'target')
+      .leftJoinAndSelect('target.video', 'video')
+      .orderBy('COUNT(likes)', 'DESC')
+      .addGroupBy('video.id')
+      .getMany();
+  }
+
+  async getMostLikedComments(): Promise<Like[]> {
+    return this.likeRepository
+      .createQueryBuilder('likes')
+      .leftJoinAndSelect('likes.target', 'target')
+      .leftJoinAndSelect('target.comments', 'comment')
+      .orderBy('COUNT(likes)', 'DESC')
+      .addGroupBy('comment.id')
+      .getMany();
   }
 }
