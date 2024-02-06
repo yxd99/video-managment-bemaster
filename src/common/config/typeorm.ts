@@ -10,7 +10,7 @@ export function config(): TypeOrmModuleOptions {
     host: configService.get('DB_HOST'),
     port: Number(configService.get('DB_PORT')),
     database: configService.get('DB_NAME'),
-    type: 'mariadb',
+    type: 'postgres',
     synchronize: environment !== 'prod',
     entities: [`${__dirname}/**/*.entity{.ts,.js}`],
     autoLoadEntities: true,

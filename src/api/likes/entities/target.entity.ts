@@ -18,10 +18,10 @@ export class Target {
   targetType: string;
 
   @OneToOne(() => Video, { cascade: true, nullable: true })
-  @JoinColumn({ name: 'target_id', referencedColumnName: 'video_id' })
+  @JoinColumn({ name: 'target_id', referencedColumnName: 'id' })
   video: Video;
 
   @OneToOne(() => Comment, { cascade: true, nullable: true })
-  @JoinColumn({ name: 'target_id', referencedColumnName: 'comment_id' })
+  @JoinColumn({ name: 'target_id', referencedColumnName: 'id' })
   comment: Comment;
 }
